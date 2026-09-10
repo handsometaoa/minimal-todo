@@ -1,21 +1,44 @@
-MIT License
+极简待办（Minimal Todo）软件许可协议
+版本 1.0，2026
+
+版权所有 (c) 2026 handsometaoa
+
+一、定义
+
+"本软件"指本仓库中的源代码、资源文件及其衍生作品。
+"商业用途"指以营利为目的的任何使用方式，包括但不限于：
+  1. 将本软件或其修改版作为商品出售、捆绑销售或收费提供；
+  2. 将本软件或其修改版集成到商业产品或商业服务中；
+  3. 在企业或其他营利性组织的经营活动中部署使用本软件；
+  4. 基于本软件进行二次开发并用于商业目的。
+
+二、授权条款
+
+1. 个人使用：任何人可以免费使用、复制、修改本软件，用于个人学习与个人日常事务管理。
+2. 分发：非商业目的的再分发须完整保留本协议及上述版权声明，并注明原作者与项目来源。
+3. 商业用途：任何商业用途须事先取得作者书面授权。授权事宜请联系邮箱：2216662881@qq.com。
+4. 署名：无论是否商用，再分发时不得移除或涂改原作者署名与版权声明，不得冒称原创。
+
+三、免责声明
+
+本软件按"现状"提供，不附带任何明示或默示的担保，包括但不限于适销性与特定用途适用性的担保。
+在任何情况下，作者或版权持有人均不对因使用或无法使用本软件而产生的任何索赔、损害或其他责任负责。
+
+---
+
+English Summary（仅供参考，以中文版本为准）
 
 Copyright (c) 2026 handsometaoa
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+The source code of this project is publicly available.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. Personal use: You may use, copy and modify this software free of charge for
+   personal, non-commercial purposes.
+2. Redistribution: Non-commercial redistribution must retain this license
+   notice and the original copyright, and credit the original author.
+3. Commercial use: Any commercial use — including selling, bundling,
+   integrating into commercial products or services, or deploying within
+   for-profit organizations — requires prior written permission from the
+   author (2216662881@qq.com).
+4. The software is provided "as is", without warranty of any kind. In no event
+   shall the author be liable for any claim, damages or other liability.

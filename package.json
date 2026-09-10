@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "极简待办 Electron 桌面客户端",
     "author": "handsometaoa",
-    "license": "MIT",
+    "license": "SEE LICENSE IN LICENSE",
     "main": "electron/main.cjs",
     "scripts": {
         "start": "electron .",

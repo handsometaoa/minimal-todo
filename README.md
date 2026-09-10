@@ -7,12 +7,12 @@
 > 以桌面贴边挂件的方式记录和处理待办事项 —— 无构建、无框架的 Electron 桌面客户端。
 
 [![Release](https://img.shields.io/github/v/release/handsometaoa/minimal-todo)](https://github.com/handsometaoa/minimal-todo/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#-开源协议)
+[![License](https://img.shields.io/badge/License-个人免费_商用需授权-orange)](#-开源协议)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey)](#-平台兼容性)
 [![Electron](https://img.shields.io/badge/Electron-33-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
-**本项目开源，个人使用完全免费。**
+**本项目开源，个人使用完全免费；商用须事先取得作者授权。**
 
 [功能特性](#-功能特性) · [下载安装](#-下载安装) · [开发指南](#-开发指南) · [Roadmap](#-roadmap) · [开源协议](#-开源协议)
 
@@ -172,4 +172,8 @@ npm start
 
 ## 📄 开源协议
 
-本项目基于 [MIT License](https://opensource.org/licenses/MIT) 开源，**个人使用完全免费**，可自由使用、学习、修改与分发。
+本项目源代码公开，基于自定义许可协议发布（完整条款见 [LICENSE](LICENSE)）：
+
+- **个人使用完全免费** —— 学习、日常使用、修改均无需授权
+- **商用须取得作者同意** —— 任何商业用途（出售、捆绑、集成到商业产品或服务、营利性组织内部部署、二次开发后商用等）须事先通过邮箱 `2216662881@qq.com` 取得作者书面授权
+- 再分发须保留原作者版权声明，注明项目来源，不得冒称原创
