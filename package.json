@@ -1,0 +1,93 @@
+{
+    "name": "minimal-todo-desktop",
+    "productName": "极简待办",
+    "version": "1.0.5",
+    "description": "极简待办 Electron 桌面客户端",
+    "author": "handsometaoa",
+    "license": "MIT",
+    "main": "electron/main.cjs",
+    "scripts": {
+        "start": "electron .",
+        "postinstall": "electron-rebuild -f -w better-sqlite3",
+        "rebuild:native": "electron-rebuild -f -w better-sqlite3",
+        "dist": "electron-builder",
+        "dist:win": "electron-builder --win",
+        "dist:mac": "electron-builder --mac",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "check": "npm run lint && npm run format:check && node scripts/check-modules.mjs"
+    },
+    "build": {
+        "appId": "com.handsometaoa.minimal-todo",
+        "productName": "极简待办",
+        "directories": {
+            "output": "dist",
+            "buildResources": "build"
+        },
+        "files": [
+            "package.json",
+            "electron/**",
+            "public/**",
+            "src/scripts/**",
+            "src/app.js",
+            "src/styles/**"
+        ],
+        "asar": true,
+        "asarUnpack": [
+            "node_modules/better-sqlite3/**"
+        ],
+        "win": {
+            "icon": "build/icon.png",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "runAfterFinish": true,
+            "createDesktopShortcut": true,
+            "shortcutName": "极简待办",
+            "installerHeader": "build/installerHeader.bmp",
+            "installerSidebar": "build/installerSidebar.bmp",
+            "installerLanguages": [
+                "zh_CN"
+            ],
+            "artifactName": "极简待办-Setup-${version}.${ext}"
+        },
+        "mac": {
+            "icon": "build/icon.png",
+            "category": "public.app-category.productivity",
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
+            ],
+            "artifactName": "极简待办-${version}-${arch}.${ext}"
+        }
+    },
+    "dependencies": {
+        "better-sqlite3": "^12.11.1"
+    },
+    "devDependencies": {
+        "@electron/rebuild": "^4.2.0",
+        "@eslint/js": "^10.0.1",
+        "electron": "^33.4.11",
+        "electron-builder": "^26.15.3",
+        "eslint": "^10.10.0",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.12.0",
+        "prettier": "^3.9.6"
+    }
+}

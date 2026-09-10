@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>极简待办 TODO</title>
+        <link rel="icon" type="image/png" href="logo.png" />
+        <link rel="stylesheet" href="../src/styles/styles.css" />
+    </head>
+    <body>
+        <div class="app-shell is-collapsed" id="appShell" data-view="active" data-side="right">
+            <button class="edge-strip" id="edgeStrip" type="button" aria-label="展开待办助手">
+                <span class="edge-strip__glow" aria-hidden="true"></span>
+                <span class="edge-strip__icon" aria-hidden="true">
+                    <img src="logo.png" alt="" class="edge-strip__icon-image" />
+                </span>
+                <span class="edge-strip__badge" id="stripBadge">0</span>
+            </button>
+
+            <div class="panel-stage" id="panelStage" hidden>
+                <button class="panel-overlay" id="panelOverlay" type="button" aria-label="关闭待办助手"></button>
+
+                <aside class="todo-panel" id="todoPanel" aria-label="待办助手侧边栏">
+                    <header class="panel-header">
+                        <div class="panel-heading">
+                            <p class="panel-kicker">Minimal Todo</p>
+                            <h1 class="panel-title" id="panelTitle">极简待办 TODO</h1>
+                        </div>
+                        <div class="panel-actions">
+                            <button
+                                class="header-count"
+                                id="headerCount"
+                                type="button"
+                                aria-label="关于极简待办与赞助"
+                                title="关于极简待办"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="11.5"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            </button>
+                            <div class="menu-anchor">
+                                <button
+                                    class="icon-button"
+                                    id="featureButton"
+                                    type="button"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                    aria-controls="featureMenu"
+                                    aria-label="更多功能"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="5" r="1.5"></circle>
+                                        <circle cx="12" cy="12" r="1.5"></circle>
+                                        <circle cx="12" cy="19" r="1.5"></circle>
+                                    </svg>
+                                </button>
+                                <div class="feature-menu feature-menu--dropdown" id="featureMenu" hidden>
+                                    <button class="feature-menu__item" type="button" data-view-target="completed">
+                                        已完成
+                                    </button>
+                                    <button class="feature-menu__item" type="button" data-view-target="settings">
+                                        设置
+                                    </button>
+                                    <button class="feature-menu__item" type="button" data-view-target="profile">
+                                        个人中心
+                                    </button>
+                                    <div class="feature-menu__divider" role="separator"></div>
+                                    <button
+                                        class="feature-menu__item feature-menu__item--danger"
+                                        type="button"
+                                        id="exitAppButton"
+                                    >
+                                        完全退出
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <section class="view is-visible" id="activeView" data-view-panel="active">
+                        <div class="composer-section">
+                            <div class="composer">
+                                <input
+                                    type="text"
+                                    class="composer-input"
+                                    id="addTodoInput"
+                                    placeholder="输入待办内容，按 Enter 添加"
+                                    maxlength="200"
+                                />
+                                <button
+                                    class="composer-button composer-button--ghost"
+                                    id="dueToggleBtn"
+                                    type="button"
+                                    aria-label="设置到期时间"
+                                    title="到期提醒"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="9"></circle>
+                                        <polyline points="12 7 12 12 15 14"></polyline>
+                                    </svg>
+                                </button>
+                                <button class="composer-button" id="addTodoBtn" type="button" aria-label="添加待办">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 5v14M5 12h14"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="due-row" id="dueRow" hidden>
+                                <div class="due-presets">
+                                    <button class="due-chip" type="button" data-due-slot="0">今天 18:00</button>
+                                    <button class="due-chip" type="button" data-due-slot="1">明天 09:00</button>
+                                    <button class="due-chip" type="button" data-due-slot="2">后天 09:00</button>
+                                    <button class="due-chip" type="button" data-due-slot="3">下周一 09:00</button>
+                                </div>
+                                <div class="due-popover__fields">
+                                    <label class="due-popover__field">
+                                        <span class="due-popover__label">日期</span>
+                                        <input type="date" class="due-popover__input" id="dueDateInput" />
+                                    </label>
+                                    <span class="due-popover__divider" aria-hidden="true"></span>
+                                    <label class="due-popover__field">
+                                        <span class="due-popover__label">时间</span>
+                                        <input type="time" class="due-popover__input" id="dueTimeInput" />
+                                    </label>
+                                </div>
+                                <div class="due-row__actions">
+                                    <button
+                                        class="due-clear"
+                                        id="dueClearBtn"
+                                        type="button"
+                                        aria-label="清除到期时间"
+                                        title="清除到期时间"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="due-add-btn" id="dueAddBtn" type="button">设置并添加待办</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section class="list-section">
+                            <div class="section-bar">
+                                <h2 class="section-title">未完成待办</h2>
+                                <div class="filter-bar todo-filter-bar" id="todoFilterBar">
+                                    <button class="filter-chip is-active" type="button" data-todo-filter="all">
+                                        全部
+                                    </button>
+                                    <button class="filter-chip" type="button" data-todo-filter="overdue">过期</button>
+                                    <button class="filter-chip" type="button" data-todo-filter="today">今天</button>
+                                    <button class="filter-chip" type="button" data-todo-filter="tomorrow">明天</button>
+                                    <button class="filter-chip" type="button" data-todo-filter="week">本周</button>
+                                </div>
+                                <span class="section-count" id="activeCount">0</span>
+                            </div>
+                            <div class="todo-list" id="todoList" aria-live="polite"></div>
+                            <div class="empty-state" id="activeEmptyState" hidden>
+                                <div class="empty-illustration" aria-hidden="true">
+                                    <svg viewBox="0 0 120 120" fill="none">
+                                        <circle
+                                            cx="60"
+                                            cy="60"
+                                            r="50"
+                                            fill="url(#activeEmptyGrad)"
+                                            opacity="0.25"
+                                        ></circle>
+                                        <path
+                                            d="M40 60h40M60 40v40"
+                                            stroke="url(#activeEmptyGrad)"
+                                            stroke-width="4"
+                                            stroke-linecap="round"
+                                        ></path>
+                                        <defs>
+                                            <linearGradient id="activeEmptyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#6366f1"></stop>
+                                                <stop offset="100%" stop-color="#f472b6"></stop>
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                                <p class="empty-title" id="activeEmptyTitle">还没有待办</p>
+                                <p class="empty-text" id="activeEmptyText">从上方输入框添加第一条任务。</p>
+                            </div>
+                        </section>
+                    </section>
+
+                    <section class="view" id="completedView" data-view-panel="completed" hidden>
+                        <div class="subview-header">
+                            <button class="ghost-button" type="button" data-back-to="active">返回</button>
+                            <div class="subview-heading">
+                                <h2 class="subview-title">已完成</h2>
+                                <p class="subview-subtitle">按完成时间查看与管理历史任务。</p>
+                            </div>
+                        </div>
+                        <div class="filter-bar">
+                            <button class="filter-chip is-active" type="button" data-completed-filter="all">
+                                全部
+                            </button>
+                            <button class="filter-chip" type="button" data-completed-filter="week">本周</button>
+                        </div>
+                        <div class="completed-list" id="completedList" aria-live="polite">
+                            <div class="empty-state empty-state--completed" id="completedEmptyState" hidden>
+                                <p class="empty-title" id="completedEmptyTitle">暂时没有已完成任务</p>
+                                <p class="empty-text" id="completedEmptyText">完成一条待办后会出现在这里。</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="view" id="settingsView" data-view-panel="settings" hidden>
+                        <div class="subview-header">
+                            <button class="ghost-button" type="button" data-back-to="active">返回</button>
+                            <div class="subview-heading">
+                                <h2 class="subview-title">设置</h2>
+                                <p class="subview-subtitle">窗口停靠、快捷提醒时间与界面主题配置。</p>
+                            </div>
+                        </div>
+                        <div class="settings-placeholder">
+                            <div class="settings-stack">
+                                <div class="settings-card settings-card--dock">
+                                    <div class="settings-card__heading">
+                                        <h3>窗口停靠</h3>
+                                        <span class="settings-badge">SVIP 权益</span>
+                                    </div>
+                                    <label class="settings-field">
+                                        <span class="settings-label">目标屏幕</span>
+                                        <select class="settings-select" id="displaySelect"></select>
+                                    </label>
+                                    <label class="settings-field">
+                                        <span class="settings-label">停靠位置</span>
+                                        <select class="settings-select" id="sideSelect">
+                                            <option value="left">左侧</option>
+                                            <option value="right">右侧</option>
+                                        </select>
+                                    </label>
+                                    <p class="settings-hint" id="settingsHint"></p>
+                                </div>
+
+                                <div class="settings-card">
+                                    <div class="settings-card__heading">
+                                        <h3>通用</h3>
+                                    </div>
+                                    <div class="settings-row">
+                                        <div class="settings-row__text">
+                                            <span class="settings-label">开机自动启动</span>
+                                            <span class="settings-row__desc" id="autoLaunchDesc">
+                                                登录系统后自动在屏幕边缘待命
+                                            </span>
+                                        </div>
+                                        <button
+                                            class="switch"
+                                            id="autoLaunchToggle"
+                                            type="button"
+                                            role="switch"
+                                            aria-checked="false"
+                                            aria-label="开机自动启动"
+                                        >
+                                            <span class="switch__knob"></span>
+                                        </button>
+                                    </div>
+                                    <p class="settings-hint">随系统启动后在屏幕边缘贴边待命，不弹窗打扰。</p>
+                                    <div class="settings-row">
+                                        <div class="settings-row__text">
+                                            <span class="settings-label">首次使用引导</span>
+                                            <span class="settings-row__desc"
+                                                >重新查看功能介绍（贴边常驻、到期提醒等）</span
+                                            >
+                                        </div>
+                                        <button class="settings-link" id="replayOnboardingButton" type="button">
+                                            重新观看
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="settings-card">
+                                    <div class="settings-card__heading">
+                                        <h3>快捷提醒时间</h3>
+                                    </div>
+                                    <div class="due-slot-grid">
+                                        <button class="due-slot-chip" type="button" data-due-slot-edit="0"></button>
+                                        <button class="due-slot-chip" type="button" data-due-slot-edit="1"></button>
+                                        <button class="due-slot-chip" type="button" data-due-slot-edit="2"></button>
+                                        <button class="due-slot-chip" type="button" data-due-slot-edit="3"></button>
+                                    </div>
+                                    <div class="due-slot-editor" id="dueSlotEditor" hidden>
+                                        <select class="settings-select" id="dueSlotEditorKind">
+                                            <option value="today">今天</option>
+                                            <option value="tomorrow">明天</option>
+                                            <option value="dayafter">后天</option>
+                                            <option value="nextweek">下周一</option>
+                                        </select>
+                                        <input type="time" class="settings-input" id="dueSlotEditorTime" />
+                                    </div>
+                                    <p class="settings-hint" id="duePresetHint">
+                                        这 4
+                                        个芯片就是输入框下方的快捷选项，点击即可修改对应的天数与提醒时间，修改后立即生效。
+                                    </p>
+                                </div>
+
+                                <div class="settings-card">
+                                    <div class="settings-card__heading">
+                                        <h3>界面设置</h3>
+                                        <span class="settings-badge">SVIP 权益</span>
+                                    </div>
+                                    <label class="settings-field">
+                                        <span class="settings-label">明暗模式</span>
+                                        <div
+                                            class="segmented-control"
+                                            id="appearanceModeGroup"
+                                            role="group"
+                                            aria-label="明暗模式"
+                                        >
+                                            <button
+                                                class="segmented-control__button"
+                                                type="button"
+                                                data-appearance-mode="light"
+                                            >
+                                                浅色
+                                            </button>
+                                            <button
+                                                class="segmented-control__button"
+                                                type="button"
+                                                data-appearance-mode="dark"
+                                            >
+                                                深色
+                                            </button>
+                                            <button
+                                                class="segmented-control__button"
+                                                type="button"
+                                                data-appearance-mode="system"
+                                            >
+                                                跟随系统
+                                            </button>
+                                        </div>
+                                        <!--
+                                        <option value="light">白天</option>
+                                        <option value="dark">晚上</option>
+                                        <option value="system">跟随系统</option>
+                                    </select>
+                                    -->
+                                    </label>
+                                    <label class="settings-field">
+                                        <span class="settings-label">主题模式</span>
+                                        <select class="settings-select" id="themeModeSelect">
+                                            <option value="preset">预设主题</option>
+                                            <option value="custom">自定义颜色</option>
+                                        </select>
+                                    </label>
+                                    <label class="settings-field" id="presetThemeField">
+                                        <span class="settings-label">预设主题</span>
+                                        <select class="settings-select" id="presetThemeSelect"></select>
+                                    </label>
+                                    <div class="theme-color-grid" id="customThemeFields">
+                                        <label class="settings-field">
+                                            <span class="settings-label">主色</span>
+                                            <div class="theme-color-input">
+                                                <input
+                                                    class="theme-color-picker"
+                                                    id="customPrimaryInput"
+                                                    type="color"
+                                                    value="#4f46e5"
+                                                />
+                                                <input
+                                                    class="theme-color-text"
+                                                    id="customPrimaryText"
+                                                    type="text"
+                                                    value="#4f46e5"
+                                                    maxlength="7"
+                                                    spellcheck="false"
+                                                />
+                                            </div>
+                                        </label>
+                                        <label class="settings-field">
+                                            <span class="settings-label">辅助色</span>
+                                            <div class="theme-color-input">
+                                                <input
+                                                    class="theme-color-picker"
+                                                    id="customSecondaryInput"
+                                                    type="color"
+                                                    value="#f472b6"
+                                                />
+                                                <input
+                                                    class="theme-color-text"
+                                                    id="customSecondaryText"
+                                                    type="text"
+                                                    value="#f472b6"
+                                                    maxlength="7"
+                                                    spellcheck="false"
+                                                />
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="theme-preview" id="themePreview">
+                                        <span class="theme-preview__swatch theme-preview__swatch--primary"></span>
+                                        <span class="theme-preview__swatch theme-preview__swatch--secondary"></span>
+                                        <span class="theme-preview__swatch theme-preview__swatch--accent"></span>
+                                    </div>
+                                    <p class="settings-hint" id="themeSettingsHint">修改后立即生效</p>
+                                </div>
+
+                                <div class="settings-card">
+                                    <div class="settings-card__heading">
+                                        <h3>数据管理</h3>
+                                        <span class="settings-badge">SVIP 权益</span>
+                                    </div>
+                                    <p class="settings-hint">导入、导出内容都包含未完成和已完成任务，格式为 JSON。</p>
+                                    <div class="settings-action-row">
+                                        <button class="settings-action" id="importDataButton" type="button">
+                                            导入数据
+                                        </button>
+                                        <button class="settings-action" id="exportDataButton" type="button">
+                                            导出数据
+                                        </button>
+                                    </div>
+                                    <input id="importDataInput" type="file" accept="application/json,.json" hidden />
+                                    <p>可清理 30 天以前的已完成历史记录，保持列表整洁</p>
+                                    <button
+                                        class="settings-action settings-action--danger"
+                                        id="cleanupHistoryButton"
+                                        type="button"
+                                    >
+                                        清理过期历史
+                                    </button>
+                                    <p class="settings-hint">这个操作只会影响已完成历史记录，不会删除当前待办</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="view" id="profileView" data-view-panel="profile" hidden>
+                        <div class="subview-header">
+                            <button class="ghost-button" type="button" data-back-to="active">返回</button>
+                            <div class="subview-heading">
+                                <h2 class="subview-title">个人中心</h2>
+                                <p class="subview-subtitle">查看本地账号信息与会员状态。</p>
+                            </div>
+                        </div>
+                        <div class="settings-placeholder">
+                            <div class="settings-card profile-card" id="profileCard">
+                                <div class="profile-card__hero">
+                                    <div class="profile-avatar" aria-hidden="true">
+                                        <img class="profile-avatar__image" id="profileAvatarImage" alt="" hidden />
+                                        <span class="profile-avatar__fallback" id="profileAvatarFallback">?</span>
+                                    </div>
+                                    <div class="profile-card__content">
+                                        <div class="profile-card__name-row">
+                                            <h3 class="profile-card__name" id="profileNickname">本地用户</h3>
+                                            <span
+                                                class="profile-card__badge"
+                                                id="profileVipBadge"
+                                                hidden
+                                                tabindex="0"
+                                                aria-label="SVIP权益"
+                                            >
+                                                <span>SVIP</span>
+                                                <span class="profile-card__badge-tooltip" role="tooltip">SVIP权益</span>
+                                            </span>
+                                        </div>
+                                        <p class="profile-card__status" id="profileStatus">本地账号</p>
+                                    </div>
+                                </div>
+                                <p class="profile-card__hint" id="profileHint">数据保存在本机，可在设置中导出备份。</p>
+                            </div>
+                            <div class="settings-card membership-card">
+                                <div class="settings-card__heading">
+                                    <h3>SVIP 状态</h3>
+                                    <span class="settings-badge">限时体验中</span>
+                                </div>
+                                <p class="profile-card__status" id="membershipStatusText">SVIP 限时体验中</p>
+                                <p class="profile-card__hint" id="membershipStatusHint">
+                                    当前版本已开放限时体验，无需购买套餐。
+                                </p>
+                                <div class="membership-plan-list" id="membershipPlanList" hidden></div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="due-popover" id="duePopover" role="dialog" aria-label="设置到期提醒" hidden>
+                        <div class="due-popover__presets">
+                            <button class="due-popover__chip" type="button" data-due-slot="0">今天 18:00</button>
+                            <button class="due-popover__chip" type="button" data-due-slot="1">明天 09:00</button>
+                            <button class="due-popover__chip" type="button" data-due-slot="2">后天 09:00</button>
+                            <button class="due-popover__chip" type="button" data-due-slot="3">下周一 09:00</button>
+                        </div>
+                        <div class="due-popover__fields">
+                            <label class="due-popover__field">
+                                <span class="due-popover__label">日期</span>
+                                <input type="date" class="due-popover__input" id="duePopoverDate" />
+                            </label>
+                            <span class="due-popover__divider" aria-hidden="true"></span>
+                            <label class="due-popover__field">
+                                <span class="due-popover__label">时间</span>
+                                <input type="time" class="due-popover__input" id="duePopoverTime" />
+                            </label>
+                        </div>
+                        <div class="due-popover__actions">
+                            <button
+                                class="due-popover__delete"
+                                id="duePopoverDelete"
+                                type="button"
+                                title="删除提醒时间"
+                            >
+                                删除提醒
+                            </button>
+                            <div class="due-popover__buttons">
+                                <button class="due-popover__cancel" id="duePopoverCancel" type="button">取消</button>
+                                <button class="due-popover__confirm" id="duePopoverConfirm" type="button">确认</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="onboarding" id="onboardingOverlay" hidden>
+                        <div class="onboarding__backdrop"></div>
+                        <section
+                            class="onboarding__card"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="onboardingTitle"
+                        >
+                            <div class="onboarding__step">
+                                <div class="onboarding__icon" id="onboardingIcon" aria-hidden="true"></div>
+                                <p class="onboarding__eyebrow" id="onboardingEyebrow"></p>
+                                <h2 class="onboarding__title" id="onboardingTitle"></h2>
+                                <p class="onboarding__text" id="onboardingText"></p>
+                            </div>
+                            <div class="onboarding__dots" id="onboardingDots" aria-hidden="true"></div>
+                            <div class="onboarding__actions">
+                                <button class="onboarding__skip" id="onboardingSkip" type="button">跳过引导</button>
+                                <button class="onboarding__primary" id="onboardingNext" type="button">下一步</button>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="confirm-dialog" id="confirmDialog" hidden>
+                        <div class="confirm-dialog__backdrop" id="confirmDialogBackdrop"></div>
+                        <div
+                            class="confirm-dialog__panel"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="confirmDialogTitle"
+                            aria-describedby="confirmDialogDescription"
+                        >
+                            <h3 class="confirm-dialog__title" id="confirmDialogTitle">
+                                &#30830;&#35748;&#28165;&#29702;&#21382;&#21490;&#25968;&#25454;
+                            </h3>
+                            <p class="confirm-dialog__text" id="confirmDialogDescription">
+                                &#30830;&#23450;&#21024;&#38500; 30
+                                &#22825;&#20197;&#21069;&#30340;&#21382;&#21490;&#25968;&#25454;&#21527;&#65311;
+                            </p>
+                            <p class="confirm-dialog__warning">
+                                &#21024;&#38500;&#21518;&#19981;&#21487;&#24674;&#22797;&#12290;
+                            </p>
+                            <div class="confirm-dialog__actions">
+                                <button class="settings-action" id="confirmDialogCancel" type="button">
+                                    &#21462;&#28040;
+                                </button>
+                                <button
+                                    class="settings-action settings-action--danger"
+                                    id="confirmDialogConfirm"
+                                    type="button"
+                                >
+                                    &#30830;&#35748;&#21024;&#38500;
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-dialog" id="aboutDialog" hidden>
+                        <div class="about-dialog__backdrop" id="aboutDialogBackdrop"></div>
+                        <div
+                            class="about-dialog__panel"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="aboutDialogTitle"
+                        >
+                            <button
+                                class="about-dialog__close"
+                                id="aboutDialogClose"
+                                type="button"
+                                aria-label="关闭关于弹窗"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                            <img class="about-dialog__logo" src="logo.png" alt="极简待办图标" />
+                            <h3 class="about-dialog__title" id="aboutDialogTitle">
+                                极简待办
+                                <span class="about-dialog__version" id="aboutVersion"></span>
+                            </h3>
+                            <p class="about-dialog__desc">贴边常驻的极简本地待办，数据保存在本机。</p>
+                            <div class="about-dialog__meta">
+                                <span class="about-dialog__author">作者&nbsp;·&nbsp;handsometaoa</span>
+                                <a
+                                    class="about-dialog__link"
+                                    id="aboutGithubLink"
+                                    href="https://github.com/handsometaoa/minimal-todo"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    >GitHub 开源地址</a
+                                >
+                            </div>
+                            <div class="about-dialog__sponsor">
+                                <p class="about-dialog__sponsor-title">请作者喝杯咖啡</p>
+                                <div class="sponsor-cards">
+                                    <figure class="sponsor-card">
+                                        <img src="sponsor-wechat.png" alt="微信赞助收款码（占位图）" />
+                                        <figcaption>微信赞助</figcaption>
+                                    </figure>
+<!--                                    <figure class="sponsor-card">-->
+<!--                                        <img src="sponsor-alipay.png" alt="支付宝赞助收款码（占位图）" />-->
+<!--                                        <figcaption>支付宝赞助</figcaption>-->
+<!--                                    </figure>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="toast-container" id="toastContainer" aria-live="assertive"></div>
+        <script type="module" src="../src/app.js"></script>
+    </body>
+</html>

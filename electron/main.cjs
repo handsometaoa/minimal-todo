@@ -1,0 +1,500 @@
+// 极简待办 Electron 桌面客户端主进程
+// 形态：透明无边框窗口贴边停靠，仅显示 36px 侧边条，
+// 点击展开为面板（todo-sidebar:layout 通道驱动尺寸/位置），失焦自动收回
+const {
+    app,
+    BrowserWindow,
+    ipcMain,
+    screen,
+    Notification,
+    Tray,
+    Menu,
+    nativeImage,
+    dialog,
+    shell
+} = require('electron');
+const path = require('path');
+const fs = require('fs');
+const database = require('./database.cjs');
+
+const SIDEBAR_COLLAPSED_WIDTH = 36;
+const SIDEBAR_COLLAPSED_HEIGHT = 168;
+const SIDEBAR_EXPANDED_WIDTH = 544;
+const SIDEBAR_EXPANDED_MIN_HEIGHT = 560;
+const SIDEBAR_EXPANDED_MAX_HEIGHT = 900;
+const SIDEBAR_EXPANDED_TOP_PADDING = 8;
+const REMINDER_WINDOW_WIDTH = 300;
+const REMINDER_WINDOW_HEIGHT = 336;
+
+let mainWindow = null;
+let reminderWindow = null;
+let tray = null;
+let lastReminderPayload = null;
+
+// 纯界面小工具无需 GPU，关掉硬件加速：
+// 1) 不再创建 GPU 磁盘缓存，多实例瞬间抢缓存目录的「拒绝访问(0x5)」报错随之消失
+// 2) 透明窗口在一些机器上的渲染怪病也更稳
+app.disableHardwareAcceleration();
+// 第二实例启动即退出，但仍会初始化磁盘缓存与运行中实例抢锁刷报错，直接禁用相关缓存
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('disable-http-cache');
+// 贴边小窗 + 透明置顶窗会被 Chromium 的原生窗口遮挡检测误判为「被遮挡」，
+// 触发 rAF/重绘节流：展开动画卡在半路、悬浮高亮残影不重绘，必须关掉
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+
+// 单实例锁放最前：第二个实例拿到锁失败后立刻退出，避免与运行中的实例抢数据/缓存
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+    console.log('极简待办已在运行，已聚焦已有窗口。');
+    app.quit();
+} else {
+    app.on('second-instance', () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
+}
+
+// Windows 通知必须设置 AppUserModelId，否则 Notification 静默失效
+app.setAppUserModelId('com.handsometaoa.minimal-todo');
+
+function findDisplay(displayId) {
+    if (displayId != null) {
+        const hit = screen.getAllDisplays().find((d) => String(d.id) === String(displayId));
+        if (hit) return hit;
+    }
+    return screen.getPrimaryDisplay();
+}
+
+// 贴边布局算法：侧别（left/right）× 展开态（收起 36px / 展开面板）决定窗口 bounds
+function computeBounds(payload = {}) {
+    const display = findDisplay(payload.displayId);
+    const workArea = display.workArea || display.bounds;
+    const side = payload.side === 'left' ? 'left' : 'right';
+    const expanded = Boolean(payload.expanded);
+
+    const width = expanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH;
+    const height = expanded
+        ? Math.max(SIDEBAR_EXPANDED_MIN_HEIGHT, Math.min(workArea.height - 16, SIDEBAR_EXPANDED_MAX_HEIGHT))
+        : SIDEBAR_COLLAPSED_HEIGHT;
+    const x = side === 'left' ? workArea.x : workArea.x + workArea.width - width;
+    const y = expanded
+        ? workArea.y + Math.max(SIDEBAR_EXPANDED_TOP_PADDING, Math.round((workArea.height - height) / 2))
+        : workArea.y + Math.round((workArea.height - height) / 2);
+
+    return { x, y, width, height };
+}
+
+// Windows 对 ShowWindow 会播放约 200ms 的淡入+缩放打开动画，落在 36px 侧边条上像「抖一下」。
+// 规避：先 park 到虚拟桌面 union 右侧 100px 的屏幕外位置显示，让动画在屏幕外空放，
+// 动画结束后再移回贴边位置——移动已显示的窗口不触发系统动画，侧边条瞬间到位。
+// 不能用 setOpacity(0→1)：transparent 窗口恢复不透明在 DWM 层不生效，窗口会一直隐身。
+const SIDEBAR_OPEN_ANIMATION_MS = 320;
+let sidebarParkTimer = null;
+function cancelSidebarParkRestore() {
+    if (sidebarParkTimer) {
+        clearTimeout(sidebarParkTimer);
+        sidebarParkTimer = null;
+    }
+}
+function showSidebarWindow({ inactive = false } = {}) {
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isVisible()) return;
+    cancelSidebarParkRestore();
+    const target = mainWindow.getBounds();
+    const virtualRight = Math.max(...screen.getAllDisplays().map((d) => d.bounds.x + d.bounds.width));
+    mainWindow.setBounds({ ...target, x: virtualRight + 100 }, false);
+    if (inactive) mainWindow.showInactive();
+    else mainWindow.show();
+    sidebarParkTimer = setTimeout(() => {
+        sidebarParkTimer = null;
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setBounds(target, false);
+    }, SIDEBAR_OPEN_ANIMATION_MS);
+}
+
+function applySidebarLayout(payload) {
+    if (!mainWindow || mainWindow.isDestroyed()) return false;
+    try {
+        mainWindow.setBounds(computeBounds(payload), false);
+        // 窗口已被移到真实位置，park 恢复定时器若再触发会用旧收起态 bounds 覆盖
+        cancelSidebarParkRestore();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+        showSidebarWindow();
+        return true;
+    } catch (error) {
+        console.error('Failed to apply sidebar layout:', error);
+        return false;
+    }
+}
+
+function createMainWindow() {
+    mainWindow = new BrowserWindow({
+        width: SIDEBAR_COLLAPSED_WIDTH,
+        height: SIDEBAR_COLLAPSED_HEIGHT,
+        show: false,
+        frame: false,
+        transparent: true,
+        backgroundColor: '#00000000',
+        hasShadow: false,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        movable: true,
+        skipTaskbar: true,
+        alwaysOnTop: true,
+        autoHideMenuBar: true,
+        thickFrame: false,
+        fullscreenable: false,
+        roundedCorners: false,
+        closable: true,
+        title: '极简待办',
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.cjs'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            // 失焦时悬浮态、动画仍需即时重绘，不节流后台渲染
+            backgroundThrottling: false
+        }
+    });
+    mainWindow.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+        // 仅透传渲染层的警告/错误，避免刷屏
+        if (level >= 2) console.log(`[renderer] ${message} (${sourceId}:${line})`);
+    });
+    mainWindow.loadFile(path.join(__dirname, '..', 'public', 'sidebar.html'), {
+        query: { mode: 'sidebar' }
+    });
+    mainWindow.once('ready-to-show', () => {
+        // 启动即恢复上次保存的停靠位置（显示器 + 左右侧）；无保存记录时贴右缘
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        const dock = database.getDeviceSettings().dock || {};
+        const ok = applySidebarLayout({
+            displayId: dock.displayId,
+            side: dock.side === 'left' ? 'left' : 'right',
+            expanded: false
+        });
+        console.log(`[layout] ready-to-show applied=${ok} dock=`, dock, 'bounds=', mainWindow.getBounds());
+    });
+    mainWindow.on('closed', () => {
+        mainWindow = null;
+    });
+}
+
+function ensureReminderWindow() {
+    if (reminderWindow && !reminderWindow.isDestroyed()) return reminderWindow;
+    reminderWindow = new BrowserWindow({
+        width: REMINDER_WINDOW_WIDTH,
+        height: REMINDER_WINDOW_HEIGHT,
+        show: false,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        movable: false,
+        skipTaskbar: true,
+        alwaysOnTop: true,
+        focusable: false,
+        roundedCorners: false,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.cjs'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            // 提醒窗 focusable:false 永远处于「后台」，不关节流会延迟列表绘制
+            backgroundThrottling: false
+        }
+    });
+    reminderWindow.loadFile(path.join(__dirname, '..', 'public', 'reminder.html'), {
+        query: { mode: 'reminder' }
+    });
+    reminderWindow.on('closed', () => {
+        reminderWindow = null;
+    });
+    return reminderWindow;
+}
+
+function positionReminderWindow() {
+    if (!reminderWindow || reminderWindow.isDestroyed()) return;
+    const { workArea } = screen.getPrimaryDisplay();
+    reminderWindow.setBounds({
+        x: workArea.x + 12,
+        y: workArea.y + 12,
+        width: REMINDER_WINDOW_WIDTH,
+        height: REMINDER_WINDOW_HEIGHT
+    });
+}
+
+function hideReminderWindow() {
+    try {
+        if (reminderWindow && !reminderWindow.isDestroyed()) reminderWindow.hide();
+    } catch (error) {
+        console.error('Failed to hide reminder window:', error);
+    }
+}
+
+function showReminderWindow(payload, { forceSend = false } = {}) {
+    const win = ensureReminderWindow();
+    positionReminderWindow();
+    lastReminderPayload = payload;
+    // 页面尚在加载时发送会丢失，由页面的 todo-reminder:ready 握手补发
+    if (!win.webContents.isLoading() || forceSend) {
+        win.webContents.send('todo-reminder:data', payload);
+    }
+    if (!win.isVisible()) {
+        // 通知类窗口不抢焦点
+        if (typeof win.showInactive === 'function') win.showInactive();
+        else win.show();
+    }
+}
+
+function sendToMainWindow(channel, payload) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(channel, payload);
+    }
+}
+
+// —— 侧边栏贴边布局（渲染面板展开/收起时驱动）——
+ipcMain.on('todo-sidebar:layout', (_event, payload) => {
+    if (applySidebarLayout(payload || {})) {
+        // 记住停靠位置（显示器 + 左右侧），下次启动直接恢复
+        try {
+            const current = database.getDeviceSettings().dock || {};
+            database.setDeviceSetting('dock', {
+                displayId: payload && payload.displayId != null ? String(payload.displayId) : current.displayId,
+                side: payload && (payload.side === 'left' || payload.side === 'right') ? payload.side : current.side
+            });
+        } catch (error) {
+            console.error('Failed to persist dock config:', error);
+        }
+    }
+});
+
+// —— 提醒链路 ——
+ipcMain.on('todo-reminder:show', (_event, payload) => {
+    const data =
+        payload && typeof payload === 'object' && Array.isArray(payload.list) ? payload : { list: [], theme: null };
+    if (data.list.length === 0) {
+        hideReminderWindow();
+        return;
+    }
+    showReminderWindow(data);
+});
+
+ipcMain.on('todo-reminder:ready', () => {
+    // 页面脚本能发出 ready 就说明渲染层已就绪，直接补发；此时 isLoading 仍为 true
+    // （脚本执行早于 load 完成），走 showReminderWindow 的默认判断会把补发吞掉，
+    // 提醒窗因此永远空白
+    if (lastReminderPayload) showReminderWindow(lastReminderPayload, { forceSend: true });
+});
+
+ipcMain.on('todo-reminder:empty', () => {
+    lastReminderPayload = null;
+    hideReminderWindow();
+    sendToMainWindow('todo-reminder:empty');
+});
+
+ipcMain.on('todo-reminder:dismiss', (_event, id) => {
+    sendToMainWindow('todo-reminder:dismiss', id);
+    if (reminderWindow && !reminderWindow.isDestroyed()) {
+        reminderWindow.webContents.send('todo-reminder:dismissed', id);
+    }
+});
+
+// —— 屏幕枚举（设置页「目标屏幕」与贴边布局使用）——
+function normalizeDisplay(display, primaryId, index) {
+    return {
+        id: String(display.id),
+        label: `显示器 ${index}`,
+        isPrimary: String(display.id) === String(primaryId),
+        bounds: { ...display.bounds },
+        workArea: { ...display.workArea }
+    };
+}
+
+function getDisplaySnapshot() {
+    const primary = screen.getPrimaryDisplay();
+    const displays = screen.getAllDisplays().map((display, index) => normalizeDisplay(display, primary.id, index + 1));
+    return {
+        displays,
+        primary: displays.find((display) => display.isPrimary) || displays[0]
+    };
+}
+
+ipcMain.on('host:get-displays', (event) => {
+    event.returnValue = getDisplaySnapshot().displays;
+});
+
+ipcMain.on('host:get-primary-display', (event) => {
+    event.returnValue = getDisplaySnapshot().primary;
+});
+
+// —— 本地数据库（SQLite，userData/app-data/minimal-todo.db，schema 与 DAO 见 database.cjs）——
+function registerDatabaseIpc() {
+    ipcMain.handle('app-data:bootstrap', () => database.bootstrapSnapshot());
+    ipcMain.handle('todos:create', (_e, todo) => {
+        database.createTodo(database.currentUserId(), todo || {});
+        return { ok: true };
+    });
+    ipcMain.handle('todos:update', (_e, todo) => {
+        database.updateTodo(database.currentUserId(), todo || {});
+        return { ok: true };
+    });
+    ipcMain.handle('todos:complete', (_e, { id, completedAt } = {}) => {
+        database.completeTodo(database.currentUserId(), id, completedAt);
+        return { ok: true };
+    });
+    ipcMain.handle('todos:restore', (_e, { id } = {}) => {
+        database.restoreTodo(database.currentUserId(), id);
+        return { ok: true };
+    });
+    ipcMain.handle('todos:delete', (_e, { id } = {}) => {
+        database.deleteTodo(database.currentUserId(), id);
+        return { ok: true };
+    });
+    ipcMain.handle('todos:reorder', (_e, orderedIds) => {
+        database.reorderTodos(database.currentUserId(), orderedIds);
+        return { ok: true };
+    });
+    ipcMain.handle('todos:bulk-replace', (_e, payload) => {
+        database.replaceAllTodos(database.currentUserId(), payload || {});
+        return { ok: true };
+    });
+    ipcMain.handle('completed:clear-expired', (_e, { beforeTs } = {}) => {
+        const removed = database.clearExpiredCompleted(database.currentUserId(), beforeTs);
+        return { ok: true, removed };
+    });
+    ipcMain.handle('settings:set', (_e, settings) => {
+        database.saveSettings(database.currentUserId(), settings || {});
+        return { ok: true };
+    });
+    ipcMain.handle('user:update-profile', (_e, patch) => {
+        return database.updateUserProfile(database.currentUserId(), patch || {});
+    });
+    ipcMain.handle('device:get', () => {
+        return database.getDeviceSettings();
+    });
+    ipcMain.handle('device:set', (_e, { key, value } = {}) => {
+        database.setDeviceSetting(key, value);
+        return { ok: true };
+    });
+}
+
+// 数据库初始化失败直接弹窗退出：静默降级会导致待办数据「看起来在保存、实际丢失」
+function initDatabase() {
+    try {
+        database.open(app.getPath('userData'));
+        registerDatabaseIpc();
+    } catch (error) {
+        console.error('Failed to initialize database:', error);
+        dialog.showErrorBox('极简待办', `本地数据库初始化失败，应用即将退出：\n${error.message}`);
+        app.exit(1);
+    }
+}
+
+// —— 开机自启（Electron 登录项 API：Windows 写注册表 Run 键，macOS 写登录项）——
+// 开发态直接跑 electron.exe 时需显式带应用路径；打包后的 exe 自带应用无需参数。
+// get 与 set 必须使用同一组 path/args，否则 Windows 下注册表比对不匹配会误报 openAtLogin=false
+const AUTO_LAUNCH_ARGS = process.defaultApp ? [path.resolve(process.argv[1] || '.')] : [];
+
+ipcMain.handle('app:get-auto-launch', () => {
+    return app.getLoginItemSettings({ path: process.execPath, args: AUTO_LAUNCH_ARGS }).openAtLogin;
+});
+
+ipcMain.handle('app:set-auto-launch', (_event, enabled) => {
+    app.setLoginItemSettings({
+        openAtLogin: Boolean(enabled),
+        path: process.execPath,
+        args: AUTO_LAUNCH_ARGS
+    });
+    // 返回写入后的实际状态，供渲染层校正开关
+    return app.getLoginItemSettings({ path: process.execPath, args: AUTO_LAUNCH_ARGS }).openAtLogin;
+});
+
+// —— 宿主能力 ——
+ipcMain.on('app:quit', () => {
+    app.quit();
+});
+
+ipcMain.on('host:notify', (_event, { title, body } = {}) => {
+    if (Notification.isSupported() && title) {
+        new Notification({ title, body: body || '' }).show();
+    }
+});
+
+// —— 应用信息 / 外部链接（渲染层「关于」弹窗使用）——
+ipcMain.on('app:get-version', (event) => {
+    event.returnValue = app.getVersion();
+});
+
+ipcMain.handle('host:open-external', (_event, rawUrl) => {
+    try {
+        const url = new URL(String(rawUrl || ''));
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+        shell.openExternal(url.toString());
+        return true;
+    } catch (error) {
+        console.error('Failed to open external url:', error);
+        return false;
+    }
+});
+
+// 导出数据：弹原生保存对话框让用户自选位置，默认下载目录 + 带时间戳的文件名
+ipcMain.handle('host:export-file', async (_event, { fileName, content } = {}) => {
+    try {
+        const safeName = path.basename(String(fileName || 'export.json').trim()).replace(/[/:*?"<>|]/g, '_');
+        const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+            title: '导出待办数据',
+            defaultPath: path.join(app.getPath('downloads'), safeName),
+            filters: [
+                { name: 'JSON 数据文件', extensions: ['json'] },
+                { name: '所有文件', extensions: ['*'] }
+            ],
+            properties: ['createDirectory', 'showOverwriteConfirmation']
+        });
+        if (canceled || !filePath) return { ok: false, canceled: true };
+        fs.writeFileSync(filePath, content, 'utf-8');
+        const stats = fs.statSync(filePath);
+        return { ok: true, path: filePath, bytes: stats.size };
+    } catch (error) {
+        console.error('Failed to export file:', error);
+        return { ok: false, error: String((error && error.message) || error) };
+    }
+});
+
+// —— 托盘图标（Windows 通知区右下角常驻入口）——
+// 左键：显示/隐藏侧边条；右键：菜单（显示/隐藏、退出）
+// 注意：Windows 新应用的托盘图标默认收在通知区「^」展开里，可手动拖到常驻区
+function createTray() {
+    const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'public', 'logo.png'));
+    tray = new Tray(icon);
+    tray.setToolTip('极简待办');
+    const toggleMainWindow = () => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        if (mainWindow.isVisible()) mainWindow.hide();
+        else showSidebarWindow({ inactive: true });
+    };
+    tray.setContextMenu(
+        Menu.buildFromTemplate([
+            { label: '显示 / 隐藏侧边条', click: toggleMainWindow },
+            { type: 'separator' },
+            { label: '退出极简待办', click: () => app.quit() }
+        ])
+    );
+    tray.on('click', toggleMainWindow);
+}
+
+app.whenReady().then(() => {
+    // 未拿到单实例锁的实例即将退出，不初始化数据库与窗口
+    if (!gotSingleInstanceLock) return;
+    initDatabase();
+    createMainWindow();
+    createTray();
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    });
+});
+
+app.on('window-all-closed', () => {
+    database.close();
+    app.quit();
+});

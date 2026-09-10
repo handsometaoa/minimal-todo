@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <title>待办到期提醒</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            :root {
+                --r-accent: #fb7185;
+                --r-card-bg: rgba(20, 22, 26, 0.97);
+                --r-card-border: rgba(251, 113, 133, 0.4);
+                --r-card-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+                --r-title: #fb7185;
+                --r-muted: rgba(255, 255, 255, 0.55);
+                --r-hover-bg: rgba(251, 113, 133, 0.14);
+                --r-hover-color: #fb7185;
+                --r-item-bg: rgba(251, 113, 133, 0.08);
+                --r-item-border: rgba(251, 113, 133, 0.16);
+                --r-item-text: #f8fafc;
+                --r-due: #fb7185;
+            }
+            :root[data-appearance='light'] {
+                --r-accent: #2f6df6;
+                --r-card-bg: rgba(253, 254, 255, 0.98);
+                --r-card-border: rgba(225, 29, 72, 0.28);
+                --r-card-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+                --r-title: #e11d48;
+                --r-muted: rgba(36, 49, 61, 0.55);
+                --r-hover-bg: rgba(225, 29, 72, 0.08);
+                --r-hover-color: #e11d48;
+                --r-item-bg: rgba(225, 29, 72, 0.05);
+                --r-item-border: rgba(225, 29, 72, 0.14);
+                --r-item-text: #24313d;
+                --r-due: #e11d48;
+            }
+            body {
+                font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+                background: transparent;
+                overflow: hidden;
+            }
+            .reminder-card {
+                padding: 12px;
+                border-radius: 16px;
+                background: var(--r-card-bg);
+                border: 1px solid var(--r-card-border);
+                box-shadow: var(--r-card-shadow);
+            }
+            .reminder-card__header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 8px;
+            }
+            .reminder-card__title {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                color: var(--r-title);
+            }
+            .reminder-card__title svg {
+                width: 14px;
+                height: 14px;
+                color: var(--r-accent);
+            }
+            .reminder-card__close,
+            .reminder-item__dismiss {
+                width: 22px;
+                height: 22px;
+                flex-shrink: 0;
+                border: 0;
+                border-radius: 6px;
+                background: transparent;
+                color: var(--r-muted);
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                line-height: 1;
+                transition:
+                    background 140ms ease,
+                    color 140ms ease;
+            }
+            .reminder-card__close:hover,
+            .reminder-item__dismiss:hover {
+                background: var(--r-hover-bg);
+                color: var(--r-hover-color);
+            }
+            .reminder-card__list {
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-height: 264px;
+                overflow-y: auto;
+            }
+            .reminder-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 8px 10px;
+                border-radius: 10px;
+                background: var(--r-item-bg);
+                border: 1px solid var(--r-item-border);
+            }
+            .reminder-item__main {
+                flex: 1;
+                min-width: 0;
+            }
+            .reminder-item__text {
+                font-size: 13px;
+                color: var(--r-item-text);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .reminder-item__due {
+                display: block;
+                margin-top: 2px;
+                font-size: 11px;
+                color: var(--r-due);
+                font-variant-numeric: tabular-nums;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="reminder-card" role="alert">
+            <div class="reminder-card__header">
+                <span class="reminder-card__title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <polyline points="12 7 12 12 15 14"></polyline>
+                    </svg>
+                    待办到期
+                </span>
+                <button class="reminder-card__close" id="closeAll" type="button" aria-label="关闭全部提醒">×</button>
+            </div>
+            <ul class="reminder-card__list" id="reminderList"></ul>
+        </div>
+        <script src="../src/scripts/reminder.js"></script>
+    </body>
+</html>
