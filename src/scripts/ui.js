@@ -743,8 +743,8 @@ export function applyDueEditPreset(slotIndex) {
     if (elements.duePopoverTime) elements.duePopoverTime.value = toTimeInputValue(preset);
 }
 
-// 快捷芯片文字跟随设置的槽位（天数可自选）；「今天」已过配置时刻不再置灰，
-// 点击后由 computeDuePreset 自动顺延到明天同时刻
+// 快捷芯片文字跟随设置的槽位（天数可自选）；「今天」已过配置时刻置灰禁用，
+// 需要顺延请改用自定义日期时间或「明天」芯片
 const DUE_PRESET_LABELS = { today: '今天', tomorrow: '明天', dayafter: '后天', nextweek: '下周一' };
 
 export function updateDuePresetChips() {
@@ -755,9 +755,8 @@ export function updateDuePresetChips() {
         const label = DUE_PRESET_LABELS[slot.kind] || '自定义';
         chip.textContent = `${label} ${slot.time}`;
         const todayPassed = slot.kind === 'today' && isTodayPresetPassed(slot.time);
-        chip.title = todayPassed
-            ? `今天 ${slot.time} 已过，点击将设为明天 ${slot.time}`
-            : `设置${label} ${slot.time} 到期`;
+        chip.disabled = todayPassed;
+        chip.title = todayPassed ? `今天 ${slot.time} 已过，不可选择` : `设置${label} ${slot.time} 到期`;
     });
 }
 

@@ -2546,7 +2546,7 @@ button:not(.todo-handle):active {
         color var(--transition);
 }
 
-.due-popover__chip:hover {
+.due-popover__chip:hover:not(:disabled) {
     background: var(--primary-soft);
     border-color: var(--primary-strong);
     color: var(--text-primary);
