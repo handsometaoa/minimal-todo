@@ -8,7 +8,7 @@
 
 [![Release](https://img.shields.io/github/v/release/handsometaoa/minimal-todo)](https://github.com/handsometaoa/minimal-todo/releases)
 [![License](https://img.shields.io/badge/License-个人免费_商用需授权-orange)](#-开源协议)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey)](#-平台兼容性)
+[![Platform](https://img.shields.io/badge/platform-Windows-blue)](#-平台兼容性)
 [![Electron](https://img.shields.io/badge/Electron-33-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
@@ -69,10 +69,11 @@
 
 **普通用户**无需配置开发环境，直接从 [GitHub Releases](https://github.com/handsometaoa/minimal-todo/releases) 下载最新安装包：
 
-| 平台    | 安装包                          | 说明                        |
-| ------- | ------------------------------- | --------------------------- |
-| Windows | `极简待办-Setup-<version>.exe`  | NSIS 安装向导，双击安装     |
-| macOS   | `极简待办-<version>-<arch>.dmg` | 支持 Apple Silicon 与 Intel |
+| 平台    | 安装包                         | 说明                    |
+| ------- | ------------------------------ | ----------------------- |
+| Windows | `极简待办-Setup-<version>.exe` | NSIS 安装向导，双击安装 |
+
+> macOS 暂不支持，后续版本计划支持。
 
 > 💡 项目开源，**个人使用完全免费**；安装包附带 SHA256 校验码（`SHA256SUMS`），可在下载后自行校验完整性。
 
@@ -156,13 +157,13 @@ npm start
 
 ## 🖥️ 平台兼容性
 
-- **Windows**：主要验证平台，完整能力可用
-- **macOS / Linux**：代码层面跨平台（Electron 与原生 API 均跨平台）；个别窗口选项（如 `skipTaskbar`、`thickFrame`）仅对 Windows 有意义，macOS 会忽略，不影响功能。macOS 实机验证待做
+- **Windows**：主要支持与验证平台，完整能力可用
+- **macOS / Linux**：**暂不支持**。代码层面保持跨平台（Electron 与原生 API 均跨平台），macOS 支持将在后续版本恢复
 
 ## 🚀 打包发布
 
 - **Windows**：`npm run dist:win` 本地构建，产物 `dist/极简待办-Setup-<version>.exe`（NSIS 安装向导，带品牌侧边图、可选安装目录、创建桌面快捷方式；侧边图源文件 `build/installerSidebar.bmp`，可用 `npx electron scripts/render-installer-assets.cjs` 重新生成）
-- **macOS**：`.dmg` 只能在 macOS 上构建，在 Mac 上执行 `npm run dist:mac`（产出 Apple Silicon + Intel 双架构）；GitHub Actions 目前仅构建 Windows 安装包
+- **macOS**：暂不随版本发布。如需自行构建，在 Mac 上执行 `npm run dist:mac`（产出 Apple Silicon + Intel 双架构）
 - 国内网络构建时若工具链下载超时，设置镜像：
   `ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`
 
@@ -176,7 +177,7 @@ npm start
 
 - [ ] 接入真实用户体系（用户接口已就绪，替换 `src/scripts/user/` 工厂实现）
 - [ ] 基于用户体系接入云同步（数据模型已预留 `user_id` / `updated_at`）
-- [ ] macOS 实机验证（安装包可由 CI 构建）
+- [ ] macOS 支持（代码已跨平台，恢复 CI 构建并完成实机验证）
 
 ## 🤝 参与贡献
 
