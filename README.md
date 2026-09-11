@@ -148,9 +148,7 @@ npm start
 ## 🚀 打包发布
 
 - **Windows**：`npm run dist:win` 本地构建，产物 `dist/极简待办-Setup-<version>.exe`（NSIS 安装向导，带品牌侧边图、可选安装目录、创建桌面快捷方式；侧边图源文件 `build/installerSidebar.bmp`，可用 `npx electron scripts/render-installer-assets.cjs` 重新生成）
-- **macOS**：`.dmg` 只能在 macOS 上构建。两种方式：
-    - 在 Mac 上执行 `npm run dist:mac`（产出 Apple Silicon + Intel 双架构）
-    - 推送 `v*` 标签或手动触发 GitHub Actions 工作流 `.github/workflows/release.yml`，云端构建 Windows / macOS 安装包，并自动创建 GitHub Release 挂载全部产物
+- **macOS**：`.dmg` 只能在 macOS 上构建，在 Mac 上执行 `npm run dist:mac`（产出 Apple Silicon + Intel 双架构）；GitHub Actions 目前仅构建 Windows 安装包
 - 国内网络构建时若工具链下载超时，设置镜像：
   `ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`
 

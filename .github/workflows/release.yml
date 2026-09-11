@@ -1,4 +1,4 @@
-# 发布构建：打 tag（v*）或手动触发时，云端构建 Windows / macOS 安装包，
+# 发布构建：打 tag（v*）或手动触发时，云端构建 Windows 安装包，
 # 生成 SHA256 校验码，并自动创建 GitHub Release 挂载全部产物
 name: Release
 
@@ -13,10 +13,7 @@ permissions:
 
 jobs:
     build:
-        strategy:
-            matrix:
-                os: [windows-latest, macos-latest]
-        runs-on: ${{ matrix.os }}
+        runs-on: windows-latest
         steps:
             - uses: actions/checkout@v4
 
@@ -29,25 +26,19 @@ jobs:
             - run: npm ci
 
             - name: Build installers (Windows)
-              if: matrix.os == 'windows-latest'
               run: npx electron-builder --win --publish never
-
-            - name: Build installers (macOS)
-              if: matrix.os == 'macos-latest'
-              run: npx electron-builder --mac --publish never
 
             - name: Upload installers
               uses: actions/upload-artifact@v4
               with:
-                  name: installers-${{ matrix.os }}
+                  name: installers-windows
                   path: |
                       dist/*.exe
-                      dist/*.dmg
                       dist/*.blockmap
                       dist/latest.yml
                   if-no-files-found: error
 
-    # 汇总两平台产物，统一生成 SHA256 校验码并创建 Release
+    # 汇总产物，统一生成 SHA256 校验码并创建 Release（仅 tag 触发时）
     release:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: build
