@@ -60,7 +60,7 @@
             "installerLanguages": [
                 "zh_CN"
             ],
-            "artifactName": "极简待办-Setup-${version}.${ext}"
+            "artifactName": "MinimalTodo-Setup-${version}.${ext}"
         },
         "mac": {
             "icon": "build/icon.png",
@@ -74,7 +74,7 @@
                     ]
                 }
             ],
-            "artifactName": "极简待办-${version}-${arch}.${ext}"
+            "artifactName": "MinimalTodo-${version}-${arch}.${ext}"
         }
     },
     "dependencies": {
