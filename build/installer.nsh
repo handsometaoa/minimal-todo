@@ -69,7 +69,12 @@
     nsDialogs::SelectFolderDialog "选定 ${PRODUCT_NAME} 要安装的文件夹" "$1"
     Pop $0
     ${If} $0 != "error"
-      ${NSD_SetText} $hkDirField $0
+      StrCpy $INSTDIR $0
+      Call hkFreshInstallDir
+      ${If} $0 == "1"
+        Call hkAppendSubfolder
+      ${EndIf}
+      ${NSD_SetText} $hkDirField $INSTDIR
     ${EndIf}
   FunctionEnd
 
@@ -77,19 +82,23 @@
     ${NSD_GetText} $hkDirField $INSTDIR
     Call hkFreshInstallDir
     ${If} $0 == "1"
-      ; 全新安装补全最终路径：用户选了上级目录（如 D:\）时追加 MinimalTodo 并回填显示
-      Push $INSTDIR
-      Push "MinimalTodo"
-      Call StrContains
-      Pop $1
-      ${If} $1 == ""
-        StrCpy $2 $INSTDIR 1 -1
-        ${If} $2 == "\"
-          StrCpy $INSTDIR "$INSTDIRMinimalTodo"
-        ${Else}
-          StrCpy $INSTDIR "$INSTDIR\MinimalTodo"
-        ${EndIf}
-        ${NSD_SetText} $hkDirField $INSTDIR
+      Call hkAppendSubfolder
+    ${EndIf}
+  FunctionEnd
+
+  ; 全新安装补全最终路径：用户选了上级目录（如 D:\）时追加 MinimalTodo
+  ; （路径中已含 MinimalTodo 则不重复追加）
+  Function hkAppendSubfolder
+    Push $INSTDIR
+    Push "MinimalTodo"
+    Call StrContains
+    Pop $1
+    ${If} $1 == ""
+      StrCpy $2 $INSTDIR 1 -1
+      ${If} $2 == "\"
+        StrCpy $INSTDIR "$INSTDIRMinimalTodo"
+      ${Else}
+        StrCpy $INSTDIR "$INSTDIR\MinimalTodo"
       ${EndIf}
     ${EndIf}
   FunctionEnd
