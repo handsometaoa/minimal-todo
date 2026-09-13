@@ -2251,58 +2251,31 @@ body.is-sorting {
     border-color: rgba(70, 88, 114, 0.14);
 }
 
-/* —— 快捷提醒时间：所见即所得芯片 + 内联编辑器 —— */
+/* —— 快捷提醒时间：4 组「天数下拉 + 时间输入」，2×2 排布 —— */
 .due-slot-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px 12px;
+    gap: 8px 12px;
 }
 
-.due-slot-chip {
-    height: 34px;
-    padding: 0 12px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--surface-soft);
-    color: var(--text-primary);
-    font-size: 12.5px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition:
-        background var(--transition),
-        border-color var(--transition),
-        color var(--transition);
-}
-
-.due-slot-chip:hover {
-    border-color: var(--primary-strong);
-}
-
-.due-slot-chip.is-editing {
-    border-color: var(--primary-strong);
-    background: var(--primary-soft);
-}
-
-.due-slot-editor {
-    margin-top: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px dashed var(--border);
-    background: var(--surface-soft);
+.due-slot-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
 }
 
-.due-slot-editor .settings-select {
-    flex: 1;
+.due-slot-row .settings-select {
+    flex: none;
+    width: 86px;
     min-width: 0;
     height: 34px;
 }
 
-.due-slot-editor .settings-input {
-    flex: none;
-    width: 108px;
+.due-slot-row .settings-input {
+    flex: 1;
+    width: 0;
+    min-width: 0;
     height: 34px;
 }
 

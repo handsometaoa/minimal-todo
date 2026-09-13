@@ -654,8 +654,8 @@ export function renderSettings() {
     if (elements.exportDataButton) elements.exportDataButton.disabled = !hasMembership;
     if (elements.cleanupHistoryButton) elements.cleanupHistoryButton.disabled = !hasMembership;
 
-    // 设置页快捷提醒时间：渲染 4 个「所见即所得」芯片并收起编辑器
-    closeDueSlotEditor();
+    // 设置页快捷提醒时间：按当前设置填充「天数下拉 + 时间输入」
+    renderDueSlotSettings();
 
     if (!hasMembership) {
         elements.settingsHint.textContent = '未开通 SVIP，当前无法使用窗口停靠权益。';
@@ -767,42 +767,17 @@ function isTodayPresetPassed(time) {
     return Date.now() >= cutoff.getTime();
 }
 
-// —— 设置页「快捷提醒时间」：所见即所得芯片 + 内联编辑器 ——
-let dueSlotEditingIndex = -1;
-
-export function getDueSlotEditing() {
-    return dueSlotEditingIndex;
-}
-
-export function setDueSlotEditing(index) {
-    dueSlotEditingIndex = Number(index);
-    renderDueSlotSettings();
-}
-
-export function closeDueSlotEditor() {
-    dueSlotEditingIndex = -1;
-    renderDueSlotSettings();
-}
-
+// —— 设置页「快捷提醒时间」：4 行「天数下拉 + 时间输入」，改动立即持久化 ——
 export function renderDueSlotSettings() {
     const slots = getDuePresetSlots(state.data.settings);
-    elements.dueSlotChips.forEach((chip, index) => {
+    elements.dueSlotDaySelects.forEach((select, index) => {
         const slot = slots[index];
-        if (!slot) return;
-        chip.textContent = `${DUE_PRESET_LABELS[slot.kind] || '自定义'} ${slot.time}`;
-        chip.classList.toggle('is-editing', index === dueSlotEditingIndex);
+        if (slot) select.value = slot.kind;
     });
-    if (!elements.dueSlotEditor) return;
-    if (dueSlotEditingIndex >= 0) {
-        const slot = slots[dueSlotEditingIndex];
-        if (slot) {
-            elements.dueSlotEditor.hidden = false;
-            if (elements.dueSlotEditorKind) elements.dueSlotEditorKind.value = slot.kind;
-            if (elements.dueSlotEditorTime) elements.dueSlotEditorTime.value = slot.time;
-        }
-    } else {
-        elements.dueSlotEditor.hidden = true;
-    }
+    elements.dueSlotTimeInputs.forEach((input, index) => {
+        const slot = slots[index];
+        if (slot && document.activeElement !== input) input.value = slot.time;
+    });
 }
 
 export function showPanel() {

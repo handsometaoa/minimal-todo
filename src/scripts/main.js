@@ -16,7 +16,6 @@ import {
     startDueReminderLoop,
     toDateInputValue,
     normalizePresetTimeText,
-    DEFAULT_DUE_PRESET_SLOTS,
     getDuePresetSlots,
     buildThemeColors,
     resolveAppearanceMode,
@@ -76,10 +75,7 @@ import {
     syncDuePopover,
     syncTodoListOverflow,
     updateDuePresetChips,
-    renderDueSlotSettings,
-    getDueSlotEditing,
-    setDueSlotEditing,
-    closeDueSlotEditor
+    renderDueSlotSettings
 } from './ui.js';
 
 export function bindEvents() {
@@ -390,28 +386,30 @@ export function bindEvents() {
         replayOnboarding();
     });
 
-    // 快捷提醒时间设置：所见即所得芯片，点击弹出内联编辑器（天数 + 时间），改动立即持久化
+    // 快捷提醒时间设置：4 行「天数下拉 + 时间输入」，改动立即持久化
     const persistDueSlotEdits = () => {
-        const index = getDueSlotEditing();
-        if (index < 0) return;
         const slots = getDuePresetSlots(state.data.settings).map((slot) => ({ ...slot }));
-        slots[index] = {
-            kind: elements.dueSlotEditorKind.value,
-            time: normalizePresetTimeText(elements.dueSlotEditorTime.value, DEFAULT_DUE_PRESET_SLOTS[index].time)
-        };
+        let changed = false;
+        elements.dueSlotDaySelects.forEach((select, index) => {
+            if (!slots[index] || slots[index].kind === select.value) return;
+            slots[index].kind = select.value;
+            changed = true;
+        });
+        elements.dueSlotTimeInputs.forEach((input, index) => {
+            if (!slots[index]) return;
+            const time = normalizePresetTimeText(input.value, slots[index].time);
+            if (slots[index].time === time) return;
+            slots[index].time = time;
+            changed = true;
+        });
+        if (!changed) return;
         persistThemeSettings({ ...state.data.settings, dueSlots: slots });
         updateDuePresetChips();
         renderDueSlotSettings();
         showToast('快捷提醒时间已保存');
     };
-    elements.dueSlotChips.forEach((chip) => {
-        chip?.addEventListener('click', () => {
-            const index = Number(chip.dataset.dueSlotEdit);
-            setDueSlotEditing(getDueSlotEditing() === index ? -1 : index);
-        });
-    });
-    elements.dueSlotEditorKind?.addEventListener('change', persistDueSlotEdits);
-    elements.dueSlotEditorTime?.addEventListener('change', persistDueSlotEdits);
+    elements.dueSlotDaySelects.forEach((select) => select?.addEventListener('change', persistDueSlotEdits));
+    elements.dueSlotTimeInputs.forEach((input) => input?.addEventListener('change', persistDueSlotEdits));
     elements.exportDataButton?.addEventListener('click', () => {
         void exportTodoData();
     });
@@ -443,14 +441,6 @@ export function bindEvents() {
         setFeatureMenuOpen(false);
     });
 
-    // 点击快捷提醒时间编辑器外部：收起编辑器
-    document.addEventListener('click', (event) => {
-        if (getDueSlotEditing() < 0) return;
-        if (!(event.target instanceof Element)) return;
-        if (event.target.closest('.due-slot-editor') || event.target.closest('[data-due-slot-edit]')) return;
-        closeDueSlotEditor();
-    });
-
     // 点击到期弹窗外部：直接关闭，不保存(仅确认按钮生效)
     document.addEventListener('click', (event) => {
         if (!state.ui.editingDueId) return;
@@ -463,10 +453,6 @@ export function bindEvents() {
     document.addEventListener('keydown', (event) => {
         if (state.ui.editingTodoId && event.target.closest('[data-edit-input]')) return;
         if (event.key !== 'Escape') return;
-        if (getDueSlotEditing() >= 0) {
-            closeDueSlotEditor();
-            return;
-        }
         if (state.ui.isAboutDialogOpen) {
             closeAboutDialog();
             return;

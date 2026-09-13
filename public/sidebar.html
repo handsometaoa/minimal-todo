@@ -287,23 +287,46 @@
                                         <h3>快捷提醒时间</h3>
                                     </div>
                                     <div class="due-slot-grid">
-                                        <button class="due-slot-chip" type="button" data-due-slot-edit="0"></button>
-                                        <button class="due-slot-chip" type="button" data-due-slot-edit="1"></button>
-                                        <button class="due-slot-chip" type="button" data-due-slot-edit="2"></button>
-                                        <button class="due-slot-chip" type="button" data-due-slot-edit="3"></button>
-                                    </div>
-                                    <div class="due-slot-editor" id="dueSlotEditor" hidden>
-                                        <select class="settings-select" id="dueSlotEditorKind">
-                                            <option value="today">今天</option>
-                                            <option value="tomorrow">明天</option>
-                                            <option value="dayafter">后天</option>
-                                            <option value="nextweek">下周一</option>
-                                        </select>
-                                        <input type="time" class="settings-input" id="dueSlotEditorTime" />
+                                        <div class="due-slot-row">
+                                            <select class="settings-select" data-due-slot-day="0">
+                                                <option value="today">今天</option>
+                                                <option value="tomorrow">明天</option>
+                                                <option value="dayafter">后天</option>
+                                                <option value="nextweek">下周一</option>
+                                            </select>
+                                            <input type="time" class="settings-input" data-due-slot-time="0" />
+                                        </div>
+                                        <div class="due-slot-row">
+                                            <select class="settings-select" data-due-slot-day="1">
+                                                <option value="today">今天</option>
+                                                <option value="tomorrow">明天</option>
+                                                <option value="dayafter">后天</option>
+                                                <option value="nextweek">下周一</option>
+                                            </select>
+                                            <input type="time" class="settings-input" data-due-slot-time="1" />
+                                        </div>
+                                        <div class="due-slot-row">
+                                            <select class="settings-select" data-due-slot-day="2">
+                                                <option value="today">今天</option>
+                                                <option value="tomorrow">明天</option>
+                                                <option value="dayafter">后天</option>
+                                                <option value="nextweek">下周一</option>
+                                            </select>
+                                            <input type="time" class="settings-input" data-due-slot-time="2" />
+                                        </div>
+                                        <div class="due-slot-row">
+                                            <select class="settings-select" data-due-slot-day="3">
+                                                <option value="today">今天</option>
+                                                <option value="tomorrow">明天</option>
+                                                <option value="dayafter">后天</option>
+                                                <option value="nextweek">下周一</option>
+                                            </select>
+                                            <input type="time" class="settings-input" data-due-slot-time="3" />
+                                        </div>
                                     </div>
                                     <p class="settings-hint" id="duePresetHint">
                                         这 4
-                                        个芯片就是输入框下方的快捷选项，点击即可修改对应的天数与提醒时间，修改后立即生效。
+                                        行就是输入框下方的快捷选项：左边下拉选天数，右边自行填写提醒时间，修改后立即生效。
                                     </p>
                                 </div>
 
