@@ -41,8 +41,8 @@
 ### 待办管理
 
 - 添加 / 编辑 / 删除 / 完成 / 恢复待办，`全部` 视图支持拖动排序
-- 到期时间：快捷预设（今天 / 明天 / 后天 / 下周，预设时刻可自定义）+ 自定义日期时间面板
-- 到期提醒：30 秒轮询，到期弹出置顶不抢焦点的提醒窗，支持一键完成 / 稍后；已提醒不重复弹
+- 到期时间：快捷预设（今天 / 明天 / 后天 / 下周一，预设时刻可自定义）+ 自定义日期时间面板
+- 到期提醒：30 秒轮询，到期弹出置顶不抢焦点的提醒窗，支持逐条关闭（×）或全部关闭（仅清除本次提醒，不影响待办本身）；已提醒不重复弹
 - 过期语义：保存已过期的到期时间不弹提醒（仅提示），改回未来时间自动恢复提醒
 - 筛选视图：`全部` / `过期` / `今天` / `明天` / `本周`；筛选视图内按到期时间升序，`全部` 保持手动顺序
 
@@ -50,7 +50,7 @@
 
 - 深色 / 浅色 / 跟随系统三种外观模式
 - 预设主题色 + 自定义主色 / 辅色
-- 数据管理：JSON 导出（写入系统下载目录）/ 导入、清除完成历史
+- 数据管理：JSON 导入 / 导出（导出弹出系统保存对话框，默认下载目录、可自选位置）、清除完成历史
 
 ### 桌面形态
 
@@ -63,15 +63,15 @@
 
 ### 会员
 
-- SVIP 限时体验中（默认全开，经用户接口读取）；窗口停靠相关设置为会员能力
+- SVIP 限时体验中（默认全开，经用户接口读取）；窗口停靠、界面设置、数据管理相关设置为会员能力
 
 ## 📦 下载安装
 
 **普通用户**无需配置开发环境，直接从 [GitHub Releases](https://github.com/handsometaoa/minimal-todo/releases) 下载最新安装包：
 
-| 平台    | 安装包                         | 说明                    |
-| ------- | ------------------------------ | ----------------------- |
-| Windows | `极简待办-Setup-<version>.exe` | NSIS 安装向导，双击安装 |
+| 平台    | 安装包                            | 说明                                                            |
+| ------- | --------------------------------- | --------------------------------------------------------------- |
+| Windows | `MinimalTodo-Setup-<version>.exe` | NSIS 安装向导，双击安装（产物名用英文，避免中文文件名下载丢失） |
 
 > macOS 暂不支持，后续版本计划支持。
 
@@ -130,7 +130,7 @@ npm start
 │   │   ├── core.js           # 状态、加载/持久化、筛选/排序、主题、工具函数
 │   │   ├── ui.js             # 视图渲染与交互
 │   │   ├── todo-actions.js   # 待办增删改、到期时间编辑（操作级持久化）
-│   │   ├── settings-actions.js / membership-actions.js / data-transfer.js
+│   │   ├── settings-actions.js / membership-actions.js / data-transfer.js / onboarding.js
 │   │   ├── reminder.js       # 提醒窗页面逻辑
 │   │   ├── storage/          # 仓库层：SQLite（Electron）/ localStorage（浏览器兜底）
 │   │   └── user/             # 用户接口：本地默认实现（可替换远程实现）
@@ -146,7 +146,7 @@ npm start
 #### 进程与通道
 
 - **主进程**（`electron/main.cjs`）：负责窗口生命周期与宿主能力——贴边布局算法（`todo-sidebar:layout`）、提醒弹窗链路（`todo-reminder:show/ready/empty/dismiss`）、屏幕枚举、系统通知与数据导出
-- **数据通道**（`ipcMain.handle`，异步 invoke）：`app-data:bootstrap` 一次拉全量；`todos:create/update/complete/restore/delete/reorder/bulk-replace`、`completed:clear-expired`、`settings:set`、`user:update-profile`、`data:import-legacy`
+- **数据通道**（`ipcMain.handle`，异步 invoke）：`app-data:bootstrap` 一次拉全量；`todos:create/update/complete/restore/delete/reorder/bulk-replace`、`completed:clear-expired`、`settings:set`、`user:update-profile`、`device:get/set`
 - **渲染进程**：页面代码通过 `window.sidebarHost`（`electron/preload.cjs` 经 contextBridge 暴露）调用宿主能力与 `host.db` 数据接口
 
 #### 存储与用户
@@ -162,7 +162,7 @@ npm start
 
 ## 🚀 打包发布
 
-- **Windows**：`npm run dist:win` 本地构建，产物 `dist/极简待办-Setup-<version>.exe`（NSIS 安装向导，带品牌侧边图、可选安装目录、创建桌面快捷方式；侧边图源文件 `build/installerSidebar.bmp`，可用 `npx electron scripts/render-installer-assets.cjs` 重新生成）
+- **Windows**：`npm run dist:win` 本地构建，产物 `dist/MinimalTodo-Setup-<version>.exe`（NSIS 安装向导，带品牌侧边图、可选安装目录、创建桌面快捷方式；侧边图源文件 `build/installerSidebar.bmp`，可用 `npx electron scripts/render-installer-assets.cjs` 重新生成）
 - **macOS**：暂不随版本发布。如需自行构建，在 Mac 上执行 `npm run dist:mac`（产出 Apple Silicon + Intel 双架构）
 - 国内网络构建时若工具链下载超时，设置镜像：
   `ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`
