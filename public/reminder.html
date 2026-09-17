@@ -11,9 +11,9 @@
             }
             :root {
                 --r-accent: #fb7185;
-                /* Fluent 亚克力材质：半透明底色允许桌面内容微透，叠加噪点与内高光 */
-                --r-glass-bg: rgba(33, 36, 42, 0.74);
-                --r-glass-tint: color-mix(in srgb, var(--r-accent) 5%, transparent);
+                /* Fluent 亚克力质感：底色接近不透明保证在任意桌面背景上可读
+                   （纯 CSS 无法真模糊桌面内容），玻璃感由描边、内高光与噪点承担 */
+                --r-glass-bg: rgba(30, 33, 39, 0.93);
                 --r-glass-border: rgba(255, 255, 255, 0.1);
                 --r-glass-highlight: rgba(255, 255, 255, 0.12);
                 --r-shadow: 0 2px 6px rgba(0, 0, 0, 0.28), 0 14px 32px rgba(0, 0, 0, 0.38);
@@ -28,7 +28,7 @@
                 --r-scrollbar-hover: rgba(255, 255, 255, 0.26);
             }
             :root[data-appearance='light'] {
-                --r-glass-bg: rgba(246, 247, 250, 0.78);
+                --r-glass-bg: rgba(247, 248, 251, 0.95);
                 --r-glass-border: rgba(255, 255, 255, 0.65);
                 --r-glass-highlight: rgba(255, 255, 255, 0.9);
                 --r-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 14px 32px rgba(15, 23, 42, 0.16);
@@ -50,19 +50,19 @@
                 padding: 10px;
                 -webkit-font-smoothing: antialiased;
             }
-            /* 卡片：亚克力底 + 顶部内高光 + 描边，噪点纹理由 ::before 叠加 */
+            /* 卡片：亚克力底 + 顶部内高光 + 描边，噪点纹理由 ::before 叠加。
+               注意：底色必须走 background-color 单值——多层 background 简写里
+               中间层放 var() 颜色会令整个声明在计算时失效，卡片底色直接不渲染 */
             .reminder-card {
                 position: relative;
                 padding: 12px;
                 border-radius: 12px;
-                background:
-                    linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 42%), var(--r-glass-tint),
-                    var(--r-glass-bg);
+                background-color: color-mix(in srgb, var(--r-accent) 5%, var(--r-glass-bg));
+                background-image: linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 42%);
                 border: 1px solid var(--r-glass-border);
                 box-shadow:
                     inset 0 1px 0 var(--r-glass-highlight),
                     var(--r-shadow);
-                backdrop-filter: blur(24px) saturate(1.35);
                 animation: r-card-in 220ms cubic-bezier(0, 0.5, 0.2, 1) both;
             }
             .reminder-card::before {
