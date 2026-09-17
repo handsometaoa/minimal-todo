@@ -10,6 +10,7 @@ const {
     Tray,
     Menu,
     nativeImage,
+    powerMonitor,
     dialog,
     shell
 } = require('electron');
@@ -87,35 +88,77 @@ function computeBounds(payload = {}) {
 }
 
 // Windows 对 ShowWindow 会播放约 200ms 的淡入+缩放打开动画，落在 36px 侧边条上像「抖一下」。
-// 规避：先 park 到虚拟桌面 union 右侧 100px 的屏幕外位置显示，让动画在屏幕外空放，
+// 规避：先 park 到屏幕外位置显示，让动画在屏幕外空放，
 // 动画结束后再移回贴边位置——移动已显示的窗口不触发系统动画，侧边条瞬间到位。
+// park 位置由 pickSidebarParkBounds 选择，需紧贴目标显示器以保证 DPI 换算正确。
 // 不能用 setOpacity(0→1)：transparent 窗口恢复不透明在 DWM 层不生效，窗口会一直隐身。
 const SIDEBAR_OPEN_ANIMATION_MS = 320;
 let sidebarParkTimer = null;
+// 最近一次布局意图（displayId/side/expanded）。窗口 bounds 可能被系统挪动或因
+// 工作区变化而过期，显示/重锚时必须按这份意图重新计算，而不是沿用 getBounds()
+let lastSidebarLayout = null;
 function cancelSidebarParkRestore() {
     if (sidebarParkTimer) {
         clearTimeout(sidebarParkTimer);
         sidebarParkTimer = null;
     }
 }
+// park 位置要求：a) 不与任何显示器相交（打开动画在屏外空放不被看到）；
+// b) 紧贴目标显示器外侧——屏外窗口的 DPI 按「最近显示器」解析，park 在别的
+// 缩放比的显示器旁会让还原 setBounds 按错误 scaleFactor 换算，落点整体偏移
+// 几十到几百像素（侧边条「漂移几厘米」的多屏混合缩放场景）
+function pickSidebarParkBounds(targetBounds, displayId) {
+    const displays = screen.getAllDisplays();
+    const intersectsAny = (rect) =>
+        displays.some((d) => {
+            const b = d.bounds;
+            return (
+                rect.x < b.x + b.width &&
+                rect.x + rect.width > b.x &&
+                rect.y < b.y + b.height &&
+                rect.y + rect.height > b.y
+            );
+        });
+    const display = findDisplay(displayId);
+    const db = display.bounds;
+    const candidates = [
+        { ...targetBounds, x: db.x + db.width + 100 },
+        { ...targetBounds, x: db.x - 100 - targetBounds.width },
+        { ...targetBounds, x: db.x + 8, y: db.y + db.height + 100 },
+        { ...targetBounds, x: db.x + 8, y: db.y - 100 - targetBounds.height }
+    ];
+    const hit = candidates.find((rect) => !intersectsAny(rect));
+    if (hit) return hit;
+    // 兜底：四侧都被邻居占据（少见的多屏环绕布局），退回 union 最右侧之外
+    const virtualRight = Math.max(...displays.map((d) => d.bounds.x + d.bounds.width));
+    return { ...targetBounds, x: virtualRight + 100 };
+}
 function showSidebarWindow({ inactive = false } = {}) {
     if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isVisible()) return;
     cancelSidebarParkRestore();
-    const target = mainWindow.getBounds();
-    const virtualRight = Math.max(...screen.getAllDisplays().map((d) => d.bounds.x + d.bounds.width));
-    mainWindow.setBounds({ ...target, x: virtualRight + 100 }, false);
+    // 还原目标按布局意图重新计算：隐藏/运行期间任务栏、缩放、睡眠唤醒都可能
+    // 让 getBounds() 里的旧位置失效，沿用会把漂移带回屏幕
+    const layout = lastSidebarLayout || {};
+    const target = computeBounds(layout);
+    mainWindow.setBounds(pickSidebarParkBounds(target, layout.displayId), false);
     if (inactive) mainWindow.showInactive();
     else mainWindow.show();
     sidebarParkTimer = setTimeout(() => {
         sidebarParkTimer = null;
-        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setBounds(target, false);
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setBounds(computeBounds(layout), false);
     }, SIDEBAR_OPEN_ANIMATION_MS);
 }
 
 function applySidebarLayout(payload) {
     if (!mainWindow || mainWindow.isDestroyed()) return false;
+    const normalized = {
+        displayId: payload && payload.displayId != null ? String(payload.displayId) : undefined,
+        side: payload && payload.side === 'left' ? 'left' : 'right',
+        expanded: Boolean(payload && payload.expanded)
+    };
     try {
-        mainWindow.setBounds(computeBounds(payload), false);
+        lastSidebarLayout = normalized;
+        mainWindow.setBounds(computeBounds(normalized), false);
         // 窗口已被移到真实位置，park 恢复定时器若再触发会用旧收起态 bounds 覆盖
         cancelSidebarParkRestore();
         mainWindow.setAlwaysOnTop(true, 'screen-saver');
@@ -125,6 +168,33 @@ function applySidebarLayout(payload) {
         console.error('Failed to apply sidebar layout:', error);
         return false;
     }
+}
+
+// 显示器拓扑/工作区变化、睡眠唤醒后系统可能把贴边窗留在过期位置；按布局意图
+// 重锚。只调整 bounds 不强制显示：用户主动托盘隐藏的状态保持隐藏
+let reanchorTimer = null;
+function reanchorSidebarBounds() {
+    if (!mainWindow || mainWindow.isDestroyed() || !lastSidebarLayout) return;
+    try {
+        mainWindow.setBounds(computeBounds(lastSidebarLayout), false);
+    } catch (error) {
+        console.error('Failed to reanchor sidebar bounds:', error);
+    }
+}
+function scheduleReanchor() {
+    if (reanchorTimer) clearTimeout(reanchorTimer);
+    // display-metrics-changed 在缩放/分辨率调整中会连发多次，防抖到稳定后执行
+    reanchorTimer = setTimeout(() => {
+        reanchorTimer = null;
+        reanchorSidebarBounds();
+    }, 300);
+}
+function registerSidebarReanchor() {
+    screen.on('display-metrics-changed', scheduleReanchor);
+    screen.on('display-added', scheduleReanchor);
+    screen.on('display-removed', scheduleReanchor);
+    powerMonitor.on('resume', scheduleReanchor);
+    powerMonitor.on('unlock-screen', scheduleReanchor);
 }
 
 function createMainWindow() {
@@ -489,6 +559,7 @@ app.whenReady().then(() => {
     initDatabase();
     createMainWindow();
     createTray();
+    registerSidebarReanchor();
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
