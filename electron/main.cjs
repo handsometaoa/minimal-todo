@@ -547,8 +547,19 @@ ipcMain.handle('host:export-file', async (_event, { fileName, content } = {}) =>
 });
 
 // —— 托盘图标（Windows 通知区右下角常驻入口）——
-// 左键：显示/隐藏侧边条；右键：菜单（显示/隐藏、退出）
+// 左键：显示/隐藏侧边条；右键：菜单（显示/隐藏、重启、退出）
 // 注意：Windows 新应用的托盘图标默认收在通知区「^」展开里，可手动拖到常驻区
+function restartApp() {
+    app.relaunch();
+    // app.exit 不触发 window-all-closed 的 database.close()，先手动关库再退出
+    try {
+        database.close();
+    } catch (error) {
+        console.error('Failed to close database before restart:', error);
+    }
+    app.exit(0);
+}
+
 function createTray() {
     const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'public', 'logo.png'));
     tray = new Tray(icon);
@@ -562,6 +573,7 @@ function createTray() {
         Menu.buildFromTemplate([
             { label: '显示 / 隐藏侧边条', click: toggleMainWindow },
             { type: 'separator' },
+            { label: '重新启动', click: restartApp },
             { label: '退出极简待办', click: () => app.quit() }
         ])
     );
