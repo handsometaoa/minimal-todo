@@ -226,6 +226,13 @@ export function bindEvents() {
     elements.duePopoverConfirm?.addEventListener('click', () => {
         if (state.ui.editingDueId) saveDueEdit(state.ui.editingDueId);
     });
+    // 弹层内按 Enter 等同确认（焦点在日期/时间输入框时生效；按钮上回车走原生点击，避免重复保存）
+    elements.duePopover?.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.target.closest('button')) return;
+        if (!state.ui.editingDueId) return;
+        event.preventDefault();
+        saveDueEdit(state.ui.editingDueId);
+    });
     elements.duePopoverDelete?.addEventListener('click', () => {
         if (state.ui.editingDueId) clearDueEdit(state.ui.editingDueId);
     });
