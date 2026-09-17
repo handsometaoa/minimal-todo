@@ -249,16 +249,26 @@ function createMainWindow() {
     });
 }
 
-function ensureReminderWindow() {
-    if (reminderWindow && !reminderWindow.isDestroyed()) return reminderWindow;
+function ensureReminderWindow({ recreate = false } = {}) {
+    if (reminderWindow && !reminderWindow.isDestroyed()) {
+        if (!recreate) return reminderWindow;
+        reminderWindow.destroy();
+        reminderWindow = null;
+    }
     reminderWindow = new BrowserWindow({
         width: REMINDER_WINDOW_WIDTH,
         height: REMINDER_WINDOW_HEIGHT,
         show: false,
         frame: false,
         transparent: true,
+        backgroundColor: '#00000000',
         hasShadow: false,
-        resizable: false,
+        // thickFrame:false + resizable:true 必须保持：透明无边框窗在 Windows 上若以
+        // resizable:false(+默认 thickFrame) 创建，部分机器/缩放比下整窗点击穿透，
+        // 表现为「提醒弹窗看得见、点关闭没反应」；frameless 下 resizable:true 无边框
+        // 不可拖拽调尺寸，仅避开该缺陷组合（与主窗口标志对齐）
+        thickFrame: false,
+        resizable: true,
         minimizable: false,
         maximizable: false,
         movable: false,
@@ -303,7 +313,11 @@ function hideReminderWindow() {
 }
 
 function showReminderWindow(payload, { forceSend = false } = {}) {
-    const win = ensureReminderWindow();
+    // 隐藏态弹出时重建窗口：透明无边框窗的 HWND 若在跨屏/缩放变化后复用，
+    // 输入区域可能与显示内容错位（看得见点不着）；全新创建可绕开该类问题。
+    // 可见态收到新数据则原地复用，避免弹窗闪烁
+    const recreate = !(reminderWindow && !reminderWindow.isDestroyed() && reminderWindow.isVisible());
+    const win = ensureReminderWindow({ recreate });
     positionReminderWindow();
     lastReminderPayload = payload;
     // 页面尚在加载时发送会丢失，由页面的 todo-reminder:ready 握手补发
