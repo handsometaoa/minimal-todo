@@ -2252,31 +2252,92 @@ body.is-sorting {
 }
 
 /* —— 快捷提醒时间：4 组「天数下拉 + 时间输入」，2×2 排布 —— */
+/* 每组是一个分段式控件：外层容器承载边框/悬停/焦点环，内部控件扁平化，
+   中缝用竖分隔线，避免四对胶囊控件各自为政的碎裂感 */
 .due-slot-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
+    gap: 10px 12px;
 }
 
 .due-slot-row {
     display: flex;
     align-items: center;
-    gap: 6px;
     min-width: 0;
+    padding: 3px 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--field-surface);
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+.due-slot-row:hover {
+    background: var(--field-surface-strong);
+    border-color: var(--border-strong);
+}
+
+.due-slot-row:focus-within {
+    border-color: var(--primary-strong);
+    box-shadow: 0 0 0 4px var(--primary-soft);
 }
 
 .due-slot-row .settings-select {
     flex: none;
     width: 86px;
     min-width: 0;
-    height: 34px;
+    height: 30px;
+    padding: 0 20px 0 8px;
+    border: 0;
+    border-radius: 7px 0 0 7px;
+    background-color: transparent;
+    /* 只保留渐变画的下拉箭头，去掉原 third 层的底色渐变（容器已提供） */
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position:
+        calc(100% - 15px) calc(50% - 2px),
+        calc(100% - 9px) calc(50% - 2px);
+    background-size:
+        6px 6px,
+        6px 6px;
+    background-repeat: no-repeat;
+    box-shadow: none;
+}
+
+.due-slot-row .settings-select:hover {
+    background-color: color-mix(in srgb, var(--field-surface-strong) 55%, transparent);
+    border-color: transparent;
+    transform: none;
+}
+
+.due-slot-row .settings-select:focus {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+:root[data-appearance='light'] .due-slot-row .settings-select {
+    box-shadow: none;
 }
 
 .due-slot-row .settings-input {
     flex: 1;
     width: 0;
     min-width: 0;
-    height: 34px;
+    height: 30px;
+    padding: 0 6px;
+    border: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0 7px 7px 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.due-slot-row .settings-input:focus {
+    border-left-color: transparent;
+    box-shadow: none;
 }
 
 .toast-container {
