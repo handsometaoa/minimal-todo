@@ -24,6 +24,7 @@ import {
 import { getRepositories } from './storage/index.js';
 import { getUserProvider } from './user/index.js';
 import { maybeRunOnboarding, replayOnboarding } from './onboarding.js';
+import { initCustomSelects } from './custom-select.js';
 import { exportTodoData, importTodoData, primeFileDialogGuard } from './data-transfer.js';
 import {
     addTodo,
@@ -520,6 +521,7 @@ export async function init() {
     void refreshAutoLaunchState();
     syncView();
     bindEvents();
+    initCustomSelects();
     elements.edgeStrip.hidden = false;
     // 提醒窗内关闭单条/全部时,同步清理侧边栏的累计列表
     const onReminderDismiss = (id) => {

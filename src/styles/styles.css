@@ -1487,6 +1487,98 @@ body.is-sorting {
     color: var(--text-muted);
 }
 
+/* —— 自绘下拉：原生 select 弹出列表无法定制（系统菜单风格），隐藏原生控件，
+      触发按钮复用 .settings-select 样式，弹出层用应用自身的 Fluent 风格 —— */
+.custom-select__native {
+    display: none !important;
+}
+.custom-select__trigger {
+    cursor: pointer;
+    /* button 默认居中，select 文案靠左 */
+    text-align: left;
+}
+.custom-select__popup {
+    position: fixed;
+    z-index: 60;
+    max-height: 248px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-elevated);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 2px 6px rgba(0, 0, 0, 0.2),
+        0 14px 32px rgba(0, 0, 0, 0.32);
+    animation: custom-select-in 140ms cubic-bezier(0, 0.5, 0.2, 1) both;
+    transform-origin: top;
+}
+:root[data-appearance='light'] .custom-select__popup {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        0 2px 6px rgba(15, 23, 42, 0.08),
+        0 14px 32px rgba(15, 23, 42, 0.16);
+}
+.custom-select__option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+}
+.custom-select__option:hover,
+.custom-select__option.is-active {
+    background: var(--surface-soft-strong);
+}
+.custom-select__option.is-selected {
+    color: var(--primary-strong);
+    font-weight: 600;
+    background: var(--primary-soft);
+}
+.custom-select__option.is-selected::after {
+    content: '✓';
+    margin-left: auto;
+    font-size: 12px;
+}
+.custom-select__option.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.custom-select__popup::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-select__popup::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-select__popup::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+}
+:root[data-appearance='light'] .custom-select__popup::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.16);
+}
+@keyframes custom-select-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .custom-select__popup {
+        animation: none;
+    }
+}
+
 .segmented-control {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -28,6 +28,7 @@ import {
     buildThemeColors,
     persist
 } from './core.js';
+import { refreshCustomSelects } from './custom-select.js';
 import { getRepositories } from './storage/index.js';
 
 let panelFocusWatchTimer = null;
@@ -605,6 +606,8 @@ export function renderThemeSettings() {
     elements.themePreview.style.setProperty('--preview-primary', colors.primary);
     elements.themePreview.style.setProperty('--preview-secondary', colors.secondary);
     elements.themePreview.style.setProperty('--preview-accent', colors.accent);
+    // 程序化改过 select 的 value/disabled，同步自绘触发按钮
+    refreshCustomSelects();
 }
 
 export function renderViews() {
@@ -778,6 +781,7 @@ export function renderDueSlotSettings() {
         const slot = slots[index];
         if (slot && document.activeElement !== input) input.value = slot.time;
     });
+    refreshCustomSelects();
 }
 
 export function showPanel() {
