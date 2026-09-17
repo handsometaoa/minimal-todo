@@ -2194,22 +2194,27 @@ body.is-sorting {
 }
 
 .about-dialog__sponsor-title {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     font-size: 12px;
     color: var(--text-secondary);
+    text-align: center;
 }
 
+/* 赞助码居中展示：单码居中，后续增加支付宝等多码自动并排、放不下换行 */
 .sponsor-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
 }
 
 .sponsor-card {
     margin: 0;
+    flex: 0 1 170px;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    text-align: center;
 }
 
 .sponsor-card img {

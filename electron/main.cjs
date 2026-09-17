@@ -263,12 +263,11 @@ function ensureReminderWindow({ recreate = false } = {}) {
         transparent: true,
         backgroundColor: '#00000000',
         hasShadow: false,
-        // thickFrame:false + resizable:true 必须保持：透明无边框窗在 Windows 上若以
-        // resizable:false(+默认 thickFrame) 创建，部分机器/缩放比下整窗点击穿透，
-        // 表现为「提醒弹窗看得见、点关闭没反应」；frameless 下 resizable:true 无边框
-        // 不可拖拽调尺寸，仅避开该缺陷组合（与主窗口标志对齐）
+        // thickFrame:false 必须保持：透明无边框窗若以默认 thickFrame 创建，部分机器/缩放比下
+        // 整窗点击穿透（「看得见、点不动」）。thickFrame:false 下 resizable:false 与主窗口
+        // 标志一致，不触发该缺陷，同时禁止拖拽调整提醒窗大小
         thickFrame: false,
-        resizable: true,
+        resizable: false,
         minimizable: false,
         maximizable: false,
         movable: false,
