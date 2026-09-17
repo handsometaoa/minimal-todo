@@ -296,9 +296,9 @@ function ensureReminderWindow({ recreate = false } = {}) {
 function positionReminderWindow() {
     if (!reminderWindow || reminderWindow.isDestroyed()) return;
     const { workArea } = screen.getPrimaryDisplay();
-    // 右上角停靠，距边缘 12px
+    // 左上角停靠，距边缘 12px
     reminderWindow.setBounds({
-        x: workArea.x + workArea.width - REMINDER_WINDOW_WIDTH - 12,
+        x: workArea.x + 12,
         y: workArea.y + 12,
         width: REMINDER_WINDOW_WIDTH,
         height: REMINDER_WINDOW_HEIGHT
