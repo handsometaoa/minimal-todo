@@ -16,6 +16,14 @@
         send('todo-reminder:empty');
     }
 
+    function updateCount() {
+        const countEl = document.getElementById('reminderCount');
+        if (!countEl) return;
+        const count = listEl.querySelectorAll('.reminder-item').length;
+        countEl.textContent = count > 0 ? `${count} 项` : '';
+        countEl.hidden = count === 0;
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = String(text == null ? '' : text);
@@ -38,6 +46,7 @@
     function render(list) {
         if (!Array.isArray(list) || list.length === 0) {
             listEl.innerHTML = '';
+            updateCount();
             hideWindow();
             return;
         }
@@ -53,6 +62,7 @@
             </li>`
             )
             .join('');
+        updateCount();
     }
 
     listEl.addEventListener('click', (event) => {
@@ -60,6 +70,7 @@
         if (!button) return;
         const node = button.closest('.reminder-item');
         if (node) node.remove();
+        updateCount();
         send('todo-reminder:dismiss', button.dataset.id);
         if (!listEl.querySelector('.reminder-item')) hideWindow();
     });

@@ -11,68 +11,119 @@
             }
             :root {
                 --r-accent: #fb7185;
-                --r-card-bg: rgba(20, 22, 26, 0.97);
-                --r-card-border: rgba(251, 113, 133, 0.4);
-                --r-card-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-                --r-title: #fb7185;
+                /* Fluent 亚克力材质：半透明底色允许桌面内容微透，叠加噪点与内高光 */
+                --r-glass-bg: rgba(33, 36, 42, 0.74);
+                --r-glass-tint: color-mix(in srgb, var(--r-accent) 5%, transparent);
+                --r-glass-border: rgba(255, 255, 255, 0.1);
+                --r-glass-highlight: rgba(255, 255, 255, 0.12);
+                --r-shadow: 0 2px 6px rgba(0, 0, 0, 0.28), 0 14px 32px rgba(0, 0, 0, 0.38);
+                --r-text: rgba(255, 255, 255, 0.95);
                 --r-muted: rgba(255, 255, 255, 0.55);
-                --r-hover-bg: rgba(251, 113, 133, 0.14);
-                --r-hover-color: #fb7185;
-                --r-item-bg: rgba(251, 113, 133, 0.08);
-                --r-item-border: rgba(251, 113, 133, 0.16);
-                --r-item-text: #f8fafc;
-                --r-due: #fb7185;
+                --r-accent-strong: color-mix(in srgb, var(--r-accent) 72%, #ffffff);
+                --r-hover-bg: rgba(255, 255, 255, 0.08);
+                --r-item-bg: rgba(255, 255, 255, 0.045);
+                --r-item-border: rgba(255, 255, 255, 0.06);
+                --r-item-bg-hover: rgba(255, 255, 255, 0.085);
+                --r-scrollbar: rgba(255, 255, 255, 0.16);
+                --r-scrollbar-hover: rgba(255, 255, 255, 0.26);
             }
             :root[data-appearance='light'] {
-                --r-accent: #2f6df6;
-                --r-card-bg: rgba(253, 254, 255, 0.98);
-                --r-card-border: rgba(225, 29, 72, 0.28);
-                --r-card-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-                --r-title: #e11d48;
-                --r-muted: rgba(36, 49, 61, 0.55);
-                --r-hover-bg: rgba(225, 29, 72, 0.08);
-                --r-hover-color: #e11d48;
-                --r-item-bg: rgba(225, 29, 72, 0.05);
-                --r-item-border: rgba(225, 29, 72, 0.14);
-                --r-item-text: #24313d;
-                --r-due: #e11d48;
+                --r-glass-bg: rgba(246, 247, 250, 0.78);
+                --r-glass-border: rgba(255, 255, 255, 0.65);
+                --r-glass-highlight: rgba(255, 255, 255, 0.9);
+                --r-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 14px 32px rgba(15, 23, 42, 0.16);
+                --r-text: #1b2129;
+                --r-muted: rgba(27, 33, 41, 0.55);
+                --r-accent-strong: color-mix(in srgb, var(--r-accent) 58%, #16222e);
+                --r-hover-bg: rgba(15, 23, 42, 0.06);
+                --r-item-bg: rgba(15, 23, 42, 0.04);
+                --r-item-border: rgba(15, 23, 42, 0.05);
+                --r-item-bg-hover: rgba(15, 23, 42, 0.07);
+                --r-scrollbar: rgba(15, 23, 42, 0.14);
+                --r-scrollbar-hover: rgba(15, 23, 42, 0.24);
             }
             body {
-                font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+                font-family:
+                    'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
                 background: transparent;
                 overflow: hidden;
+                padding: 10px;
+                -webkit-font-smoothing: antialiased;
             }
+            /* 卡片：亚克力底 + 顶部内高光 + 描边，噪点纹理由 ::before 叠加 */
             .reminder-card {
+                position: relative;
                 padding: 12px;
-                border-radius: 16px;
-                background: var(--r-card-bg);
-                border: 1px solid var(--r-card-border);
-                box-shadow: var(--r-card-shadow);
+                border-radius: 12px;
+                background:
+                    linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 42%), var(--r-glass-tint),
+                    var(--r-glass-bg);
+                border: 1px solid var(--r-glass-border);
+                box-shadow:
+                    inset 0 1px 0 var(--r-glass-highlight),
+                    var(--r-shadow);
+                backdrop-filter: blur(24px) saturate(1.35);
+                animation: r-card-in 220ms cubic-bezier(0, 0.5, 0.2, 1) both;
+            }
+            .reminder-card::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.55'/></svg>");
+                background-size: 140px 140px;
+                opacity: 0.032;
+                pointer-events: none;
+            }
+            :root[data-appearance='light'] .reminder-card::before {
+                opacity: 0.022;
             }
             .reminder-card__header {
+                position: relative;
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
-                margin-bottom: 8px;
+                gap: 8px;
+                margin-bottom: 10px;
             }
             .reminder-card__title {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: 8px;
                 font-size: 12px;
-                font-weight: 700;
-                letter-spacing: 0.04em;
-                color: var(--r-title);
+                font-weight: 600;
+                letter-spacing: 0.02em;
+                color: var(--r-text);
             }
-            .reminder-card__title svg {
-                width: 14px;
-                height: 14px;
-                color: var(--r-accent);
+            .reminder-card__icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 22px;
+                height: 22px;
+                border-radius: 6px;
+                background: color-mix(in srgb, var(--r-accent) 16%, transparent);
+                border: 1px solid color-mix(in srgb, var(--r-accent) 26%, transparent);
+                color: var(--r-accent-strong);
+            }
+            .reminder-card__icon svg {
+                width: 13px;
+                height: 13px;
+            }
+            .reminder-card__count {
+                margin-left: auto;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10.5px;
+                font-weight: 600;
+                font-variant-numeric: tabular-nums;
+                color: var(--r-accent-strong);
+                background: color-mix(in srgb, var(--r-accent) 13%, transparent);
+                border: 1px solid color-mix(in srgb, var(--r-accent) 22%, transparent);
             }
             .reminder-card__close,
             .reminder-item__dismiss {
-                width: 22px;
-                height: 22px;
+                width: 26px;
+                height: 26px;
                 flex-shrink: 0;
                 border: 0;
                 border-radius: 6px;
@@ -82,51 +133,144 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 13px;
+                font-size: 14px;
                 line-height: 1;
                 transition:
-                    background 140ms ease,
-                    color 140ms ease;
+                    background 120ms ease,
+                    color 120ms ease,
+                    transform 120ms ease;
             }
             .reminder-card__close:hover,
             .reminder-item__dismiss:hover {
                 background: var(--r-hover-bg);
-                color: var(--r-hover-color);
+                color: var(--r-text);
+            }
+            .reminder-card__close:active,
+            .reminder-item__dismiss:active {
+                transform: scale(0.94);
+            }
+            .reminder-card__close:focus-visible,
+            .reminder-item__dismiss:focus-visible {
+                outline: 2px solid var(--r-accent);
+                outline-offset: 1px;
             }
             .reminder-card__list {
+                position: relative;
                 list-style: none;
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
-                max-height: 264px;
+                gap: 6px;
+                max-height: 246px;
+                /* 入场动画的 translateX 会瞬时横向溢出，禁止横向滚动条闪现 */
+                overflow-x: hidden;
                 overflow-y: auto;
+                overscroll-behavior: contain;
             }
             .reminder-item {
+                position: relative;
                 display: flex;
                 align-items: flex-start;
                 gap: 8px;
-                padding: 8px 10px;
-                border-radius: 10px;
+                padding: 9px 8px 9px 14px;
+                border-radius: 8px;
                 background: var(--r-item-bg);
                 border: 1px solid var(--r-item-border);
+                transition:
+                    background 120ms ease,
+                    border-color 120ms ease;
+                animation: r-item-in 260ms cubic-bezier(0, 0.5, 0.2, 1) both;
+            }
+            .reminder-item:nth-child(2) {
+                animation-delay: 40ms;
+            }
+            .reminder-item:nth-child(3) {
+                animation-delay: 80ms;
+            }
+            .reminder-item:nth-child(4) {
+                animation-delay: 120ms;
+            }
+            .reminder-item:nth-child(5) {
+                animation-delay: 160ms;
+            }
+            .reminder-item:nth-child(n + 6) {
+                animation-delay: 200ms;
+            }
+            .reminder-item:hover {
+                background: var(--r-item-bg-hover);
+                border-color: color-mix(in srgb, var(--r-accent) 22%, var(--r-item-border));
+            }
+            /* Fluent 通知式的强调条：左侧 3px 圆角竖条 */
+            .reminder-item::before {
+                content: '';
+                position: absolute;
+                left: 5px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 56%;
+                border-radius: 999px;
+                background: color-mix(in srgb, var(--r-accent) 75%, transparent);
             }
             .reminder-item__main {
                 flex: 1;
                 min-width: 0;
+                padding-top: 1px;
             }
             .reminder-item__text {
                 font-size: 13px;
-                color: var(--r-item-text);
+                line-height: 1.45;
+                color: var(--r-text);
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
             .reminder-item__due {
                 display: block;
-                margin-top: 2px;
+                margin-top: 3px;
                 font-size: 11px;
-                color: var(--r-due);
+                font-weight: 600;
+                color: var(--r-accent-strong);
                 font-variant-numeric: tabular-nums;
+            }
+            /* Fluent 细滚动条：默认细，悬停加粗 */
+            .reminder-card__list::-webkit-scrollbar {
+                width: 6px;
+            }
+            .reminder-card__list::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .reminder-card__list::-webkit-scrollbar-thumb {
+                border-radius: 999px;
+                background: var(--r-scrollbar);
+            }
+            .reminder-card__list::-webkit-scrollbar-thumb:hover {
+                background: var(--r-scrollbar-hover);
+            }
+            @keyframes r-card-in {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px) scale(0.985);
+                }
+                to {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+            @keyframes r-item-in {
+                from {
+                    opacity: 0;
+                    transform: translateX(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .reminder-card,
+                .reminder-item {
+                    animation: none;
+                }
             }
         </style>
     </head>
@@ -134,12 +278,15 @@
         <div class="reminder-card" role="alert">
             <div class="reminder-card__header">
                 <span class="reminder-card__title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="9"></circle>
-                        <polyline points="12 7 12 12 15 14"></polyline>
-                    </svg>
+                    <span class="reminder-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <polyline points="12 7 12 12 15 14"></polyline>
+                        </svg>
+                    </span>
                     待办到期
                 </span>
+                <span class="reminder-card__count" id="reminderCount" hidden aria-hidden="true"></span>
                 <button class="reminder-card__close" id="closeAll" type="button" aria-label="关闭全部提醒">×</button>
             </div>
             <ul class="reminder-card__list" id="reminderList"></ul>
