@@ -1,7 +1,7 @@
 {
     "name": "minimal-todo-desktop",
     "productName": "极简待办",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "极简待办 Electron 桌面客户端",
     "author": "handsometaoa",
     "license": "SEE LICENSE IN LICENSE",
