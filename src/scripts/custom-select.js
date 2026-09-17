@@ -53,22 +53,28 @@ function setActiveIndex(index) {
     popupEl.querySelectorAll('.custom-select__option').forEach((item, i) => {
         item.classList.toggle(OPTION_ACTIVE_CLASS, i === activeIndex);
     });
-    popupEl.children[activeIndex]?.scrollIntoView({ block: 'nearest' });
+    // 只滚动浮层自身：scrollIntoView 会连带滚动页面，导致浮层与触发框错位
+    const item = popupEl.children[activeIndex];
+    if (!item) return;
+    const top = item.offsetTop;
+    const bottom = top + item.offsetHeight;
+    if (top < popupEl.scrollTop) popupEl.scrollTop = top;
+    else if (bottom > popupEl.scrollTop + popupEl.clientHeight) popupEl.scrollTop = bottom - popupEl.clientHeight;
 }
 
 function positionPopup() {
     const trigger = activeSelect?.customSelectTrigger;
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
-    popupEl.style.minWidth = `${rect.width}px`;
+    // 与触发框严格同宽
+    popupEl.style.width = `${rect.width}px`;
     popupEl.style.visibility = 'hidden';
     popupEl.hidden = false;
-    const width = popupEl.offsetWidth;
     const height = popupEl.offsetHeight;
     // 优先向下展开；下方放不下且上方更宽裕时向上翻
     const below = window.innerHeight - rect.bottom - 8;
     const top = below < height && rect.top - 8 > below ? Math.max(8, rect.top - height - 4) : rect.bottom + 4;
-    const left = Math.min(rect.left, window.innerWidth - width - 8);
+    const left = Math.min(rect.left, window.innerWidth - rect.width - 8);
     popupEl.style.left = `${Math.max(8, left)}px`;
     popupEl.style.top = `${top}px`;
     popupEl.style.visibility = '';
@@ -171,6 +177,15 @@ export function initCustomSelects() {
             const trigger = activeSelect.customSelectTrigger;
             if (popupEl.contains(event.target) || trigger?.contains(event.target)) return;
             closeSelect();
+        },
+        true
+    );
+    // 页面在浮层下方滚动时，浮层跟随触发框重新定位（浮层自身滚动除外）
+    document.addEventListener(
+        'scroll',
+        (event) => {
+            if (!activeSelect || popupEl.contains(event.target)) return;
+            positionPopup();
         },
         true
     );
