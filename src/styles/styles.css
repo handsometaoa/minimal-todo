@@ -1505,20 +1505,23 @@ body.is-sorting {
     overscroll-behavior: contain;
     padding: 4px;
     border-radius: 10px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface-elevated);
+    /* 弹层底色必须与页面卡片拉开明度差，否则深色主题下糊成一片 */
+    background: #262b33;
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 2px 6px rgba(0, 0, 0, 0.2),
-        0 14px 32px rgba(0, 0, 0, 0.32);
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 2px 8px rgba(0, 0, 0, 0.35),
+        0 16px 40px rgba(0, 0, 0, 0.45);
     animation: custom-select-in 140ms cubic-bezier(0, 0.5, 0.2, 1) both;
     transform-origin: top;
 }
 :root[data-appearance='light'] .custom-select__popup {
+    background: #ffffff;
+    border-color: rgba(70, 88, 114, 0.2);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.85),
-        0 2px 6px rgba(15, 23, 42, 0.08),
-        0 14px 32px rgba(15, 23, 42, 0.16);
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 2px 8px rgba(15, 23, 42, 0.1),
+        0 16px 40px rgba(15, 23, 42, 0.18);
 }
 .custom-select__option {
     display: flex;
@@ -1534,17 +1537,29 @@ body.is-sorting {
 }
 .custom-select__option:hover,
 .custom-select__option.is-active {
-    background: var(--surface-soft-strong);
+    background: rgba(255, 255, 255, 0.08);
+}
+:root[data-appearance='light'] .custom-select__option:hover,
+:root[data-appearance='light'] .custom-select__option.is-active {
+    background: rgba(15, 23, 42, 0.06);
 }
 .custom-select__option.is-selected {
-    color: var(--primary-strong);
+    color: var(--primary-bright);
     font-weight: 600;
-    background: var(--primary-soft);
+    background: color-mix(in srgb, var(--primary) 30%, #262b33);
+}
+:root[data-appearance='light'] .custom-select__option.is-selected {
+    color: color-mix(in srgb, var(--primary) 68%, #1a2530);
+    background: color-mix(in srgb, var(--primary) 16%, #ffffff);
 }
 .custom-select__option.is-selected::after {
     content: '✓';
     margin-left: auto;
     font-size: 12px;
+    color: var(--primary-bright);
+}
+:root[data-appearance='light'] .custom-select__option.is-selected::after {
+    color: color-mix(in srgb, var(--primary) 68%, #1a2530);
 }
 .custom-select__option.is-disabled {
     opacity: 0.45;
