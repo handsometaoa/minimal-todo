@@ -128,6 +128,11 @@ export function renderActiveTodos() {
         }
         elements.activeEmptyState.hidden = false;
         elements.activeEmptyState.style.display = 'flex';
+        // 空列表提前返回，同样要同步弹窗：筛选下最后一条被改掉时到期弹窗才能收起
+        window.requestAnimationFrame(() => {
+            syncDuePopover();
+            syncTodoListOverflow();
+        });
         return;
     }
 
