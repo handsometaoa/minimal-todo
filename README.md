@@ -56,7 +56,7 @@
 
 - 透明无边框贴边条（36px）↔ 展开面板（544px），停靠左侧或右侧、支持多显示器选择目标屏幕；启动时自动恢复上次停靠位置
 - 失焦自动收回、窗口置顶、单实例锁（重复启动自动聚焦已有实例）
-- 系统托盘图标（通知区右下角）：左键显示 / 隐藏侧边条，右键菜单可重新启动 / 退出；Windows 默认把新图标收进「^」折叠区，可在托盘设置里设为常驻
+- 系统托盘图标（通知区右下角）：左键显示 / 隐藏侧边条，右键菜单可重新启动 / 退出；Windows 默认把新图标收进「^」折叠区，可在托盘设置里设为常驻；macOS 上图标位于菜单栏右上角，点击直接展开菜单
 - 首次启动引导：自动展开面板，分步介绍贴边常驻 / 到期提醒 / 主题个性化，仅首次显示（可跳过）
 - 开机自启：设置 → 通用 中开关（Electron 登录项 API，Windows 写注册表 Run 键 / macOS 写登录项，状态以系统为准）
 - 到期提醒独立弹窗，数据落盘本地 SQLite（见[存储与用户](#存储与用户)）
@@ -72,8 +72,12 @@
 | 平台    | 安装包                            | 说明                                                            |
 | ------- | --------------------------------- | --------------------------------------------------------------- |
 | Windows | `MinimalTodo-Setup-<version>.exe` | NSIS 安装向导，双击安装（产物名用英文，避免中文文件名下载丢失） |
+| macOS   | `MinimalTodo-<version>-arm64.dmg` | Apple Silicon（M 系列芯片），打开 DMG 将应用拖入「应用程序」    |
 
-> macOS 暂不支持，后续版本计划支持。
+> macOS 安装包未做开发者签名公证，首次打开若提示「已损坏，无法打开」或「无法验证开发者」，任选其一：
+>
+> 1. 在「系统设置 → 隐私与安全性」底部点击「仍要打开」；
+> 2. 终端执行 `xattr -d com.apple.quarantine "/Applications/极简待办.app"` 后重新打开。
 
 > 💡 项目开源，**个人使用完全免费**；安装包附带 SHA256 校验码（`SHA256SUMS`），可在下载后自行校验完整性。
 
@@ -110,7 +114,7 @@ npm start
 | `npm run format:check`   | Prettier 格式校验                                             |
 | `npm run check`          | lint + 格式校验 + 模块引用检查（提交前跑这个）                |
 | `npm run dist:win`       | 打包 Windows 安装包（NSIS `.exe`，输出到 `dist/`）            |
-| `npm run dist:mac`       | 打包 macOS 安装包（`.dmg`，仅 macOS 可执行）                  |
+| `npm run dist:mac`       | 打包 macOS 安装包（`.dmg`，仅 arm64，仅 macOS 可执行）        |
 
 ### 项目结构
 
@@ -158,12 +162,13 @@ npm start
 ## 🖥️ 平台兼容性
 
 - **Windows**：主要支持与验证平台，完整能力可用
-- **macOS / Linux**：**暂不支持**。代码层面保持跨平台（Electron 与原生 API 均跨平台），macOS 支持将在后续版本恢复
+- **macOS**：支持 Apple Silicon（M 系列芯片），安装包随版本发布（未签名，首次打开见上方 Gatekeeper 说明）；Intel Mac 暂不支持
+- **Linux**：暂不支持。代码层面保持跨平台（Electron 与原生 API 均跨平台），后续按需支持
 
 ## 🚀 打包发布
 
 - **Windows**：`npm run dist:win` 本地构建，产物 `dist/MinimalTodo-Setup-<version>.exe`（NSIS 安装向导，带品牌侧边图、可选安装目录、创建桌面快捷方式；侧边图源文件 `build/installerSidebar.bmp`，可用 `npx electron scripts/render-installer-assets.cjs` 重新生成）
-- **macOS**：暂不随版本发布。如需自行构建，在 Mac 上执行 `npm run dist:mac`（产出 Apple Silicon + Intel 双架构）
+- **macOS**：CI（macos-latest）随版本自动构建，产物 `MinimalTodo-<version>-arm64.dmg`；本地构建需在 Mac 上执行 `npm run dist:mac`。无开发者证书，`build.mac.identity` 设为 `"-"` 做 ad-hoc 签名（Apple Silicon 要求二进制带有效签名，否则启动被内核拒绝）
 - 国内网络构建时若工具链下载超时，设置镜像：
   `ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`
 
@@ -177,7 +182,7 @@ npm start
 
 - [ ] 接入真实用户体系（用户接口已就绪，替换 `src/scripts/user/` 工厂实现）
 - [ ] 基于用户体系接入云同步（数据模型已预留 `user_id` / `updated_at`）
-- [ ] macOS 支持（代码已跨平台，恢复 CI 构建并完成实机验证）
+- [x] macOS 支持（Apple Silicon DMG 随版本发布，CI 已恢复；Intel Mac 暂不支持）
 
 ## 🤝 参与贡献
 

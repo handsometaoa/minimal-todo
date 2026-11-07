@@ -560,7 +560,14 @@ function restartApp() {
 }
 
 function createTray() {
-    const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'public', 'logo.png'));
+    let icon = nativeImage.createFromPath(path.join(__dirname, '..', 'public', 'logo.png'));
+    if (process.platform === 'darwin') {
+        // macOS 菜单栏图标需按点距渲染小尺寸（~18pt），1254px 原图会占满整条菜单栏；
+        // 追加 2x 表示避免视网膜屏缩放发糊
+        const rep2x = icon.resize({ width: 36, height: 36 }).toPNG();
+        icon = icon.resize({ width: 18, height: 18 });
+        icon.addRepresentation({ scaleFactor: 2, buffer: rep2x });
+    }
     tray = new Tray(icon);
     tray.setToolTip('极简待办');
     const toggleMainWindow = () => {
