@@ -226,6 +226,12 @@ function createMainWindow() {
             backgroundThrottling: false
         }
     });
+    // macOS：加入所有虚拟桌面（Space）并覆盖全屏应用之上。
+    // macOS 的窗口默认只归属创建时所在的 Space，置顶也仅在该 Space 内生效，
+    // 不加这个贴边条会在切换桌面 / 进入全屏应用后「消失」；Windows 无 Space 概念，无需处理
+    if (process.platform === 'darwin') {
+        mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    }
     mainWindow.webContents.on('console-message', (_e, level, message, line, sourceId) => {
         // 仅透传渲染层的警告/错误，避免刷屏
         if (level >= 2) console.log(`[renderer] ${message} (${sourceId}:${line})`);
@@ -283,6 +289,10 @@ function ensureReminderWindow({ recreate = false } = {}) {
             backgroundThrottling: false
         }
     });
+    // 与主窗口同理：提醒弹窗也要跨 Space、覆盖全屏应用，否则到点提醒看不见
+    if (process.platform === 'darwin') {
+        reminderWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    }
     reminderWindow.loadFile(path.join(__dirname, '..', 'public', 'reminder.html'), {
         query: { mode: 'reminder' }
     });
