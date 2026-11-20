@@ -1,7 +1,7 @@
 {
     "name": "minimal-todo-desktop",
     "productName": "极简待办",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "description": "极简待办 Electron 桌面客户端",
     "author": "handsometaoa",
     "license": "SEE LICENSE IN LICENSE",
@@ -65,11 +65,11 @@
         "mac": {
             "icon": "build/icon.png",
             "category": "public.app-category.productivity",
+            "identity": "-",
             "target": [
                 {
                     "target": "dmg",
                     "arch": [
-                        "x64",
                         "arm64"
                     ]
                 }

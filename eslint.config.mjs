@@ -10,7 +10,7 @@ import prettier from 'eslint-config-prettier';
 
 export default [
     {
-        ignores: ['node_modules/**', '.zcode/**', '.idea/**']
+        ignores: ['node_modules/**', '.zcode/**', '.idea/**', 'docs/promo/**']
     },
     js.configs.recommended,
     prettier,
